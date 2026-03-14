@@ -278,7 +278,7 @@ tasks:
 
   - id: 10
     name: orchestrating-review-md
-    status: pending
+    status: done
     depends_on: [9]
     description: >
       Write skills/orchestrating-agents/REVIEW.md — the diff review approval loop.
