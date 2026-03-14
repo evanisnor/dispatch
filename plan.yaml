@@ -912,7 +912,7 @@ tasks:
 
   - id: 28
     name: help-skill
-    status: pending
+    status: done
     depends_on: [9, 23]
     description: >
       Add a /agent-workflow:help skill that lists available slash commands and gives

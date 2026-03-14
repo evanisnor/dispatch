@@ -10,6 +10,7 @@
     "orchestrating-agents",
     "planning-tasks",
     "executing-tasks",
-    "status"
+    "status",
+    "help"
   ]
 }
