@@ -9,7 +9,7 @@ tasks:
 
   - id: 1
     name: scaffold
-    status: pending
+    status: done
     depends_on: []
     description: >
       Create the complete directory and empty-file scaffold for the plugin.
@@ -54,7 +54,7 @@ tasks:
 
   - id: 2
     name: plugin-manifest
-    status: pending
+    status: done
     depends_on: [1]
     description: >
       Write .claude-plugin/plugin.json with the content specified in the spec:

@@ -1,0 +1,9 @@
+{
+  "name": "agent-workflow",
+  "description": "Multi-agent software development workflow plugin. Provides three skills — Orchestrating Agent, Planning Agent, and Task Agents — that collaborate to take work from initial planning through to merged pull requests.",
+  "version": "1.0.0",
+  "author": "evanisnor",
+  "homepage": "https://github.com/evanisnor/agent-workflow",
+  "repository": "https://github.com/evanisnor/agent-workflow",
+  "license": "MIT"
+}
