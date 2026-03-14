@@ -39,7 +39,7 @@ sequenceDiagram
             JiraMCP-->>PrimaryAgent: Return Jira items
             PrimaryAgent->>PrimaryAgent: Match Jira issues to tasks by title; update IDs in plan
             PrimaryAgent->>PlanStorage: Persist plan with Jira IDs
-            PrimaryAgent->>Human: Confirm Jira IDs synced to plan
+            PrimaryAgent->>Human: Confirm Jira IDs linked to plan (last_synced_at recorded)
         end
     end
 
@@ -379,8 +379,9 @@ epic:
 
   # Jira sync — tracks whether slug IDs have been replaced with real Jira keys
   jira_sync:
-    status: pending | synced            # pending = slugs still in use; synced = all IDs are real Jira keys
+    status: pending | linked            # pending = slugs still in use; linked = IDs set from Jira (may be stale — check last_synced_at)
     epic_key: null                      # Populated after human provides Jira epic key
+    last_synced_at: null                # ISO 8601 timestamp of last successful Jira MCP read
     companion_doc: null                 # Path to companion Jira creation document (e.g. plans/feature-user-auth-jira-items.md)
 
   # Origin — where this work came from
