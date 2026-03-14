@@ -109,7 +109,9 @@ sequenceDiagram
         loop Monitor review and CI feedback
             GitHubCI-->>PR: Send review comments / CI feedback
             alt Clear change requests
-                PR-->>TaskAgent: Notify changes requested
+                PR-->>TaskAgent: Notify changes requested (include comment URL)
+                TaskAgent->>PrimaryAgent: Notify change requested (include comment URL and summary)
+                PrimaryAgent->>Human: Notify reviewer change request with link to comment
                 TaskAgent->>Worktree: Apply requested modifications
                 TaskAgent->>PrimaryAgent: Notify updated change for approval
                 loop Until human approves
@@ -262,6 +264,7 @@ orchestrating-agents/
 
 **`REVIEW.md`** must include:
 - Step-by-step diff review loop: open tmux pane → present diff to human → collect approval or rejection → close pane
+- When presenting a reviewer-requested change for human approval: include a direct link to the reviewer's PR comment so the human can respond directly if needed
 - Structured format for forwarding rejection reasons to Task Agent (must include: which files, what change is expected, acceptance criteria)
 - Rule: human approval is required before any change is pushed to `origin` in response to a change request; CI-only fixes do not require re-approval
 
