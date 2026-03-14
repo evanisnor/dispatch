@@ -77,6 +77,13 @@ agent-workflow/
 - Sandbox `denyRead` must hardcode blocks on `~/.ssh/`, `~/.gnupg/`, `**/.env`, `**/*.pem`, `**/*.key`. `sandbox.filesystem.extra_deny_read` in project config extends this list.
 - Task Agents use `bypassPermissions` mode scoped inside the OS-level sandbox. Orchestrating Agent uses targeted allow rules only — no `bypassPermissions`.
 
+## Implementation Process
+
+When implementing tasks from `plan.yaml`:
+- Complete one task at a time in dependency order.
+- After completing each task, commit and push before starting the next.
+- Commit message format: `Task N: <short description>`
+
 ## Key Reference Files
 
 - `SPEC.md` — Full design specification with sequence diagrams, skill specs, config schema, and security architecture. Read this before implementing anything.
