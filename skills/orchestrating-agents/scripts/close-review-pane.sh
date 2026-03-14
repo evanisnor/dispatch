@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# close-review-pane.sh — close a tmux review window
-# Usage: close-review-pane.sh <window-name-or-id>
+# close-review-pane.sh — close a tmux review pane
+# Usage: close-review-pane.sh <pane-id>
 
 set -euo pipefail
 
-WINDOW="${1:-}"
+PANE_ID="${1:-}"
 
-if [[ -z "${WINDOW}" ]]; then
-  echo "Usage: close-review-pane.sh <window-name-or-id>" >&2
+if [[ -z "${PANE_ID}" ]]; then
+  echo "Usage: close-review-pane.sh <pane-id>" >&2
   exit 1
 fi
 
@@ -16,7 +16,5 @@ if [[ -z "${TMUX:-}" ]]; then
   exit 1
 fi
 
-SESSION="$(tmux display-message -p '#S')"
-
-tmux kill-window -t "${SESSION}:${WINDOW}"
-echo "Closed review pane: ${WINDOW}"
+tmux kill-pane -t "${PANE_ID}"
+echo "Closed review pane: ${PANE_ID}"

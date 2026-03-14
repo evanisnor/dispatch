@@ -574,7 +574,7 @@ tasks:
 
   - id: 21
     name: tmux-pane-split
-    status: pending
+    status: done
     depends_on: [8, 10]
     description: >
       Fix the diff review workflow to split a pane within the Orchestrating Agent's current
