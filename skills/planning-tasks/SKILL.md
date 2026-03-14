@@ -44,6 +44,16 @@ You do **not** write code or spawn other agents. When the plan is approved, retu
 
 On completion, output exactly one line: the plan file path relative to the plan storage repository (e.g. `plans/feature-user-auth.yaml`). The Primary Agent uses this path for all subsequent operations.
 
+## Amendment Mode
+
+When spawned with an existing plan path and an amendment request (rather than a fresh assignment):
+
+1. Read the current plan from plan storage via `load-plan.sh`.
+2. Propose only the requested change — do not re-plan the entire project.
+3. Validate the modified dependency graph: check that all `depends_on` entries reference valid task IDs and that no cycles are introduced.
+4. Present the proposed change to the Primary Agent for relay to the human.
+5. Iterate until the human approves; then save the amended plan via `save-plan.sh` and return the plan path.
+
 ## Hard Constraints
 
 - **Never push code.** Your role is planning only.

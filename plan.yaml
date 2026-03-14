@@ -731,7 +731,7 @@ tasks:
 
   - id: 26
     name: plan-amendment
-    status: pending
+    status: done
     depends_on: [9, 12]
     description: >
       Define how the Orchestrating Agent handles mid-flight plan changes: adding new tasks,

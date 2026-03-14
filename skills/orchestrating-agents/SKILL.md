@@ -87,6 +87,32 @@ After marking the last task in the plan as `done`, `cancelled`, or `failed`:
    - On "keep" or no response: leave the plan in place.
 5. Announce readiness: "Ready for a new assignment."
 
+## Plan Amendment
+
+The human may request mid-flight plan changes at any time. Three amendment types are supported, each requiring human approval before acting.
+
+### Add Task
+
+1. Human requests a new task ("add a task to do X").
+2. Request human approval to spawn a Planning Agent in amendment mode, passing the existing plan path and the requested addition.
+3. Planning Agent proposes the new task(s) with correct `depends_on` wiring relative to existing tasks. Human approves.
+4. Save the amended plan via `save-plan.sh`.
+5. New task enters the normal execution queue.
+
+### Split Task
+
+1. Human identifies a task to split ("task T-3 is too large, split it").
+2. If the task is `in_progress`: ask whether to wait for it to finish or cancel it first.
+3. Planning Agent proposes replacement tasks with equivalent `depends_on`. Human approves.
+4. Mark the original task `cancelled`; add replacement tasks to the plan.
+
+### Cancel Task
+
+1. Human requests cancellation ("cancel task T-5").
+2. Identify all tasks that depend on it (directly or transitively) and present the blast radius to the human before acting.
+3. On confirmation: mark the task `cancelled`, mark all dependents `blocked`, notify relevant Task Agents.
+4. Ask the human whether to re-plan the blocked dependents or leave them as-is.
+
 ## Startup Reconciliation
 
 On every startup, before resuming work:
