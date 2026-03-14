@@ -807,6 +807,109 @@ tasks:
           - On restart: call spawn-agent.sh with the same task_id and plan_path. Update
             agent_id in the plan via save-plan.sh.
 
+  - id: 29
+    name: config-skill
+    status: pending
+    depends_on: [3, 4]
+    description: >
+      Add a /agent-workflow:config skill that documents the full configuration schema and
+      helps the user set up or update their .agent-workflow.json interactively.
+
+      Changes required:
+
+        skills/config/ (new skill directory):
+          skills/config/SKILL.md:
+            - Frontmatter: name: config, description: "Document the full .agent-workflow.json
+              configuration schema and help the user configure the plugin. Invoke with
+              /agent-workflow:config."
+            - Two modes of operation:
+
+              1. View mode (no argument or "show"):
+                 Print the full configuration reference — every key, its type, default
+                 value, and a plain-language description of what it does. Group by section.
+                 Then show the current effective config by reading .agent-workflow.json
+                 from the working directory if it exists, annotating each present value
+                 and noting which keys are absent (and therefore using their defaults).
+
+              2. Setup mode ("setup"):
+                 Walk the user through creating or updating .agent-workflow.json
+                 interactively. For each required field, prompt for a value and show the
+                 default. For optional fields, ask whether to configure them. Write the
+                 resulting file to .agent-workflow.json in the current working directory.
+                 Warn if the file already exists and confirm before overwriting.
+
+            - Full config reference to embed in the skill (all current keys):
+
+                plan_storage.repo_path
+                  Type: string (path)    Default: ~/plans
+                  The local path to your plan storage git repository. This repo holds plan
+                  YAML files and is shared across projects.
+
+                worktree.base_dir
+                  Type: string (path)    Default: ~/.agents
+                  Directory where Task Agent worktrees are created. Structure:
+                  {base_dir}/{repo-name}/{task-id}/
+
+                git.protected_branches
+                  Type: array of strings    Default: ["main", "master"]
+                  Branches that Task Agents are sandbox-denied from pushing to directly.
+
+                jira.enabled
+                  Type: boolean    Default: false
+                  Enable Jira MCP integration. Requires a Jira MCP server configured in
+                  Claude Code settings.
+
+                diff.mode
+                  Type: string ("split" | "unified")    Default: "split"
+                  Default diff display mode in review panes. "split" uses delta
+                  --side-by-side; "unified" uses standard delta output. No effect if
+                  delta is not installed.
+
+                pr.template_path
+                  Type: string (path)    Default: "" (built-in template)
+                  Path to a custom PR description template file. Leave empty to use the
+                  built-in default. Supports variables: {task_id}, {task_title},
+                  {task_description}, {epic_title}, {branch}, {plan_path}, {worktree}.
+
+                sandbox.network.allowed_domains
+                  Type: array of strings
+                  Default: ["github.com", "api.github.com", "registry.npmjs.org"]
+                  Domains Task Agents are permitted to reach over the network.
+
+                sandbox.filesystem.extra_deny_read
+                  Type: array of glob strings    Default: []
+                  Additional filesystem paths to block Task Agents from reading, merged
+                  with the hardcoded base deny list (~/.ssh/**, ~/.gnupg/**, **/.env,
+                  **/*.pem, **/*.key).
+
+                defaults.max_ci_fix_attempts
+                  Type: integer    Default: 3
+                  How many times a Task Agent may attempt to fix a CI failure before
+                  escalating to the human.
+
+                defaults.max_agent_restarts
+                  Type: integer    Default: 2
+                  How many times the Orchestrating Agent may restart a dead Task Agent
+                  before escalating.
+
+                defaults.polling_timeout_minutes
+                  Type: integer    Default: 60
+                  How long (in minutes) watch scripts and liveness checks poll before
+                  timing out and escalating.
+
+                defaults.task_agent_mode
+                  Type: string ("bypassPermissions" | "acceptEdits")    Default: "bypassPermissions"
+                  Permission mode for Task Agents. "bypassPermissions" lets the agent act
+                  freely within the OS sandbox; "acceptEdits" requires approval for every
+                  file edit.
+
+        .claude-plugin/plugin.json:
+          - Register "config" in the skills array.
+
+        skills/help/SKILL.md:
+          - Add /agent-workflow:config to the Slash Commands table with description:
+            "Show the full config schema and help configure .agent-workflow.json"
+
   - id: 28
     name: help-skill
     status: pending
