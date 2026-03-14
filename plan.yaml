@@ -417,7 +417,7 @@ tasks:
 
   - id: 14
     name: planning-jira-md
-    status: pending
+    status: done
     depends_on: [12]
     description: >
       Write skills/planning-tasks/JIRA_SYNC.md — Jira companion document generation and ID backfill.
