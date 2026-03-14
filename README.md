@@ -279,9 +279,10 @@ agent-workflow/
   .agent-workflow.example.json  # Committed template — copy to .agent-workflow.json and edit
   scripts/
     config.sh                 # Shared config loader — sourced by all skill scripts
-  orchestrating-agents/
-  planning-tasks/
-  executing-tasks/
+  skills/
+    orchestrating-agents/
+    planning-tasks/
+    executing-tasks/
 ```
 
 When the plugin is enabled, the Orchestrating Agent activates automatically as the default agent via `settings.json` → `"agent": "orchestrating-agents"` (see [Plugin Manifest](#plugin-manifest)).
@@ -291,7 +292,7 @@ When the plugin is enabled, the Orchestrating Agent activates automatically as t
 Responsible for spawning and coordinating Planning Agents and Task Agents, diff review, monitoring, and post-merge cleanup. Does not plan or write code.
 
 ```
-orchestrating-agents/
+skills/orchestrating-agents/
   SKILL.md                  # Overview + delegation workflow
   REVIEW.md                 # Tmux diff review approval loop
   PR_MONITORING.md          # PR/CI/merge queue monitoring
@@ -335,7 +336,7 @@ orchestrating-agents/
 Responsible for task decomposition, dependency tree construction, plan persistence, and Jira ID management. Spawned on-demand by the Primary Agent; runs until a plan is finalized and approved, then returns the plan path and exits.
 
 ```
-planning-tasks/
+skills/planning-tasks/
   SKILL.md                  # Overview + planning workflow
   PLANNING.md               # Task decomposition, dependency tree structure, slug ID generation
   JIRA_SYNC.md              # Companion document generation and Jira ID backfill
@@ -370,7 +371,7 @@ planning-tasks/
 Responsible for implementation, opening draft PRs, responding to CI/review feedback, handling conflicts, and adding to the merge queue.
 
 ```
-executing-tasks/
+skills/executing-tasks/
   SKILL.md                  # Overview + PR lifecycle workflow
   CI_FEEDBACK.md            # CI failure triage and fix workflow
   CONFLICT_RESOLUTION.md    # Merge conflict resolution workflow
@@ -685,12 +686,11 @@ Jira credentials are never stored in `.agent-workflow.json`. They are read from 
 
 ### How Scripts Use Settings
 
-A shared `scripts/config.sh` at the plugin root loads configuration using `jq` and exports all values as shell variables. Every skill script sources it at startup:
+A shared `scripts/config.sh` at the plugin root loads configuration using `jq` and exports all values as shell variables. Every skill script sources it at startup using the `${CLAUDE_SKILL_DIR}` variable, which the plugin runtime sets to the skill's own directory:
 
 ```bash
 # At the top of any script
-PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-source "${PLUGIN_ROOT}/scripts/config.sh"
+source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
 ```
 
 `config.sh` reads values in priority order: `.agent-workflow.json` in the current working directory (per-project), falling back to `defaults.*` in the plugin-root `settings.json` if a field is absent:
