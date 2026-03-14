@@ -19,14 +19,16 @@ sequenceDiagram
         Note over Human,PrimaryAgent: Human may send new commands or tasks to Primary Agent at any time
         PrimaryAgent->>PrimaryAgent: Break work into atomic tasks
         PrimaryAgent->>PrimaryAgent: Identify task dependencies and potential worktree conflicts
-        PrimaryAgent->>PrimaryAgent: Determine which tasks can run in parallel
-        PrimaryAgent->>Human: Propose parallel task plan (safe tasks) and deferred task list (conflicting tasks)
-        Human->>PrimaryAgent: Approve task plan
+        PrimaryAgent->>PrimaryAgent: Build full task dependency tree
+        PrimaryAgent->>Human: Present task dependency tree for approval
+        Human->>PrimaryAgent: Approve or revise task dependency tree
     end
 
-    loop For each approved parallel task batch
+    loop For each batch of tasks ready to execute per dependency tree
+        PrimaryAgent->>Human: Request approval to spawn Task Agents for ready tasks
+        Human->>PrimaryAgent: Approve Task Agent spawning
         PrimaryAgent->>TaskAgent: Spawn Task Agent with assigned task and worktree
-        Note over PrimaryAgent,TaskAgent: Conflicting tasks are deferred until in-flight merges complete
+        Note over PrimaryAgent,TaskAgent: Tasks with unresolved dependencies or worktree conflicts remain deferred in the tree
 
         TaskAgent->>Worktree: Create worktree and implement initial changes
         TaskAgent->>PrimaryAgent: Request approval to open PR
@@ -98,8 +100,8 @@ sequenceDiagram
         end
         LocalMain->>PrimaryAgent: Notify local main updated
         PrimaryAgent->>Worktree: Rebase all remaining agent worktrees onto local main
-        PrimaryAgent->>PrimaryAgent: Unblock deferred tasks that depended on this merge
-        PrimaryAgent->>Human: Propose next batch of previously deferred tasks (if any)
+        PrimaryAgent->>PrimaryAgent: Unblock tasks in dependency tree that depended on this merge
+        PrimaryAgent->>Human: Present updated task dependency tree (if remaining tasks exist)
     end
 
     Note over PrimaryAgent,Worktree: Primary Agent ensures all agent worktrees are rebased onto local main after each merge
