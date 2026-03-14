@@ -311,7 +311,7 @@ tasks:
 
   - id: 11
     name: orchestrating-pr-monitoring-md
-    status: pending
+    status: done
     depends_on: [9]
     description: >
       Write skills/orchestrating-agents/PR_MONITORING.md — PR, CI, and merge queue monitoring.
