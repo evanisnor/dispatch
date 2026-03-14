@@ -68,7 +68,7 @@ tasks:
 
   - id: 3
     name: config-files
-    status: pending
+    status: done
     depends_on: [1]
     description: >
       Write two committed configuration files and update .gitignore:

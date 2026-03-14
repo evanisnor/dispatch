@@ -1,0 +1,40 @@
+{
+  "plan_storage": {
+    "repo_path": "~/plans"
+  },
+
+  "worktree": {
+    "base_dir": "~/.agents"
+  },
+
+  "git": {
+    "protected_branches": ["main", "master"]
+  },
+
+  "jira": {
+    "enabled": true
+  },
+
+  "build": {
+    "test_command": "npm run test",
+    "lint_command": "npm run lint",
+    "build_command": "npm run build",
+    "extra_allow_commands": []
+  },
+
+  "sandbox": {
+    "network": {
+      "allowed_domains": ["github.com", "api.github.com", "registry.npmjs.org"]
+    },
+    "filesystem": {
+      "extra_deny_read": []
+    }
+  },
+
+  "defaults": {
+    "max_ci_fix_attempts": 3,
+    "max_agent_restarts": 2,
+    "polling_timeout_minutes": 60,
+    "task_agent_mode": "bypassPermissions"
+  }
+}
