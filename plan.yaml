@@ -210,7 +210,7 @@ tasks:
 
   - id: 8
     name: orchestrating-review-scripts
-    status: pending
+    status: done
     depends_on: [4]
     description: >
       Write three review/monitoring scripts in skills/orchestrating-agents/scripts/:
