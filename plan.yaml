@@ -574,7 +574,7 @@ tasks:
 
   - id: 18
     name: executing-conflict-md
-    status: pending
+    status: done
     depends_on: [16]
     description: >
       Write skills/executing-tasks/CONFLICT_RESOLUTION.md — merge conflict resolution workflow.
