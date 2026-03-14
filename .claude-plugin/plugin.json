@@ -11,6 +11,7 @@
     "planning-tasks",
     "executing-tasks",
     "status",
-    "help"
+    "help",
+    "config"
   ]
 }

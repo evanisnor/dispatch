@@ -809,7 +809,7 @@ tasks:
 
   - id: 29
     name: config-skill
-    status: pending
+    status: done
     depends_on: [3, 4]
     description: >
       Add a /agent-workflow:config skill that documents the full configuration schema and
