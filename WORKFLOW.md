@@ -11,6 +11,8 @@ sequenceDiagram
     participant LocalMain as Local Main
     participant OriginMain as Origin Main
 
+    Human->>PrimaryAgent: Delegate projects/tasks
+    Note over Human,PrimaryAgent: Human may send new commands or tasks to Primary Agent at any time
     PrimaryAgent->>NewAgent: Delegate projects/tasks
     loop For each assigned project/task
         NewAgent->>Worktree: Create worktree and implement initial changes
