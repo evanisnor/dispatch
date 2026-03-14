@@ -279,6 +279,9 @@ agent-workflow/
   .agent-workflow.example.json  # Committed template — copy to .agent-workflow.json and edit
   scripts/
     config.sh                 # Shared config loader — sourced by all skill scripts
+    watch-merge-queue.sh      # Poll merge queue status for a PR (used by orchestrating-agents and executing-tasks)
+    load-plan.sh              # Load dependency tree from Plan Storage (used by orchestrating-agents and planning-tasks)
+    save-plan.sh              # Persist dependency tree to Plan Storage (used by orchestrating-agents and planning-tasks)
   skills/
     orchestrating-agents/
     planning-tasks/
@@ -305,9 +308,6 @@ skills/orchestrating-agents/
     rebase-worktrees.sh         # Rebase all active worktrees onto local main
     remove-worktree.sh          # git worktree remove
     watch-pr-status.sh          # Poll gh pr status
-    watch-merge-queue.sh        # Poll merge queue status for a PR
-    load-plan.sh                # Load dependency tree from Plan Storage
-    save-plan.sh                # Persist dependency tree to Plan Storage
 ```
 
 #### Skill File Specifications
@@ -340,9 +340,6 @@ skills/planning-tasks/
   SKILL.md                  # Overview + planning workflow
   PLANNING.md               # Task decomposition, dependency tree structure, slug ID generation
   JIRA_SYNC.md              # Companion document generation and Jira ID backfill
-  scripts/
-    load-plan.sh            # Load dependency tree from Plan Storage
-    save-plan.sh            # Persist dependency tree to Plan Storage
 ```
 
 #### Skill File Specifications
@@ -380,7 +377,6 @@ skills/executing-tasks/
     mark-pr-ready.sh        # gh pr ready
     push-changes.sh         # git push
     add-to-merge-queue.sh   # gh pr merge --auto
-    watch-merge-queue.sh    # Poll merge queue for this PR
     watch-ci.sh             # Poll CI status for current commit
 ```
 
