@@ -89,7 +89,7 @@ tasks:
 
   - id: 4
     name: config-sh
-    status: pending
+    status: done
     depends_on: [3]
     description: >
       Write scripts/config.sh — the shared configuration loader sourced by all skill scripts.
