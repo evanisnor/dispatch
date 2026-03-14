@@ -1,0 +1,6 @@
+brew "git"
+brew "gh"
+brew "tmux"
+brew "jq"
+brew "yq"
+brew "git-delta"

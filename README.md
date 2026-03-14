@@ -25,7 +25,15 @@ agent-workflow is a Claude Code plugin that runs a multi-agent software developm
 git clone https://github.com/evanisnor/agent-workflow ~/.claude/plugins/agent-workflow
 ```
 
-**2. Enable the plugin in Claude Code**
+**2. Install dependencies (macOS)**
+
+```sh
+brew bundle --file ~/.claude/plugins/agent-workflow/Brewfile
+```
+
+Or install manually: `git`, `gh`, `tmux`, `jq`, `yq`, and optionally `git-delta`.
+
+**3. Enable the plugin in Claude Code**
 
 Pass the plugin directory when starting Claude Code:
 
@@ -35,7 +43,7 @@ claude --plugin-dir ~/.claude/plugins/agent-workflow
 
 Or set `CLAUDE_PLUGIN_DIR` in your environment to load it automatically every session.
 
-**3. Create your plan storage repository**
+**4. Create your plan storage repository**
 
 ```sh
 mkdir -p ~/plans && cd ~/plans && git init && git remote add origin <your-remote-url>
@@ -43,7 +51,7 @@ mkdir -p ~/plans && cd ~/plans && git init && git remote add origin <your-remote
 
 The plan storage repo holds plan YAML files and is shared across projects. It can be a private repo on GitHub.
 
-**4. Configure your project**
+**5. Configure your project**
 
 Copy the example config into your project root and fill in your values:
 
@@ -69,9 +77,9 @@ Edit `.agent-workflow.json`:
 
 The file is gitignored — it should never be committed.
 
-**5. Start a tmux session**
+**6. Start a tmux session**
 
-The diff review workflow opens windows inside your current tmux session. Start one before invoking the Orchestrating Agent:
+The diff review workflow splits panes inside your current tmux window. Start a session before invoking the Orchestrating Agent:
 
 ```sh
 tmux new-session -s work

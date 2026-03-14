@@ -619,7 +619,7 @@ tasks:
 
   - id: 20
     name: brewfile
-    status: pending
+    status: done
     depends_on: [19]
     description: >
       Add a Brewfile to the repository root that installs all macOS Homebrew dependencies
