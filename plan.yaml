@@ -114,7 +114,7 @@ tasks:
 
   - id: 5
     name: plan-scripts
-    status: pending
+    status: done
     depends_on: [4]
     description: >
       Write three shared scripts used by the Orchestrating and Planning Agents:
