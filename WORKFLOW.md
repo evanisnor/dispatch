@@ -77,7 +77,15 @@ sequenceDiagram
                     PrimaryAgent->>PrimaryAgent: Close tmux pane
                     PrimaryAgent-->>TaskAgent: Approves updated change
                     TaskAgent->>PR: Push approved change
-                    PR-->>GitHubCI: Re-run CI checks
+                    PR-->>GitHubCI: Trigger CI checks
+                    alt CI checks fail
+                        GitHubCI-->>PR: Report CI failures
+                        PR-->>TaskAgent: Notify CI failures
+                        TaskAgent->>PR: Fix issues and push updates (no approval needed)
+                        PR-->>GitHubCI: Re-run CI checks
+                    else CI checks pass
+                        GitHubCI-->>PR: Report CI success
+                    end
                 else Human rejects with reason
                     Human->>PrimaryAgent: Rejection with specific reason
                     PrimaryAgent->>PrimaryAgent: Close tmux pane
