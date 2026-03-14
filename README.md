@@ -7,6 +7,7 @@ sequenceDiagram
     participant Human as Human
     participant PrimaryAgent as Primary Claude Agent
     participant PlanStorage as Plan Storage
+    participant JiraMCP as Jira (MCP — read only)
     participant TaskAgent as Task Agent
     participant Worktree as Agent Worktree
     participant PR as Pull Request (Draft → Ready)
@@ -28,6 +29,18 @@ sequenceDiagram
         PrimaryAgent->>Human: Present task dependency tree for approval
         Human->>PrimaryAgent: Approve or revise task dependency tree
         PrimaryAgent->>PlanStorage: Persist approved task dependency tree
+        opt No Jira epic exists — tickets to be raised manually
+            PrimaryAgent->>PrimaryAgent: Assign slug-based IDs to epic and tasks
+            PrimaryAgent->>PrimaryAgent: Generate companion Jira creation document
+            PrimaryAgent->>Human: Present companion document listing epic and child issues to create in Jira
+            Note over Human,PrimaryAgent: Human manually creates Jira epic and child issues using companion document
+            Human->>PrimaryAgent: Notify Jira epic created (provide epic key)
+            PrimaryAgent->>JiraMCP: Read epic and child issues by epic key
+            JiraMCP-->>PrimaryAgent: Return Jira items
+            PrimaryAgent->>PrimaryAgent: Match Jira issues to tasks by title; update IDs in plan
+            PrimaryAgent->>PlanStorage: Persist plan with Jira IDs
+            PrimaryAgent->>Human: Confirm Jira IDs synced to plan
+        end
     end
 
     loop For each batch of tasks ready to execute per dependency tree
@@ -268,6 +281,9 @@ orchestrating-agents/
 - Task decomposition rules: what makes a task "atomic" (single PR, scoped file set, independently deployable)
 - Dependency tree construction: how to identify and express `depends_on` relationships and potential worktree file conflicts
 - Plan quality validation checklist to run before presenting to human: unique task IDs, no cycles in `depends_on`, every task has a non-empty description, no task references an undefined dependency
+- **Slug ID generation**: when no Jira epic key is available, assign kebab-case slug IDs (e.g. `feature-user-auth` for the epic, `task-login-endpoint` for tasks); slugs must be unique within the plan file and stable — do not regenerate after first assignment
+- **Companion Jira creation document**: when no Jira epic exists, generate a markdown file alongside the plan YAML named `{slug}-jira-items.md`; it must include the epic title and description, and a table for each child issue with: proposed summary, description, acceptance criteria, and `depends_on` issue summaries; the human uses this document to manually create Jira items
+- **Jira ID backfill**: after the human provides an epic key, use the Jira MCP to read the epic and all child issues; match each issue to a plan task by title similarity; update all `id` fields in the YAML from slugs to real Jira keys; persist and confirm to human
 
 **`REVIEW.md`** must include:
 - Structured format for forwarding rejection reasons to Task Agent (must include: which files, what change is expected, acceptance criteria)
@@ -328,6 +344,7 @@ shepherding-pull-requests/
 | `jq` | JSON parsing for `gh` API output |
 | Claude Agent SDK | Task Agent spawning; Primary Agent passes context and receives results |
 | Plan Storage (git repo) | Versioned dependency trees stored as YAML in a dedicated plans repository |
+| Jira MCP Server | Read Jira epics and child issues for context loading and Jira ID backfill (read-only) |
 
 ### Design Decisions
 
@@ -337,25 +354,34 @@ shepherding-pull-requests/
 | Plan Storage | Dedicated git repository | Versioned, shareable across machines |
 | Plan document format | YAML | Structured, Jira-compatible, human-readable, easy to parse in scripts |
 | Worktree location | Native git worktrees per repo | All active worktrees tracked in `~/.agents/` for Primary Agent visibility |
+| Jira ID lifecycle | Slug → real Jira key | Plans start with slug IDs when tickets don't yet exist; backfilled to real Jira keys after human creates tickets and confirms epic key |
 
 ### Plan Document Structure
 
-Plans are stored as YAML files in the plan repository, one file per Epic. They are created from prompts, Jira issues, or PRDs with Figma designs, and must carry all context needed for the Primary Agent to plan and delegate work without referencing the original source again.
+Plans are stored as YAML files in the plan repository, one file per Epic. They are created from prompts, Jira issues, or PRDs with Figma designs, and must carry all context needed for the Primary Agent to plan and delegate work without referencing the original source again. When no Jira epic exists at planning time, a companion markdown document is generated alongside the YAML for the human to use when manually creating Jira items.
 
 **Repository layout:**
 ```
 plans/
   EPIC-123.yaml
   EPIC-124.yaml
+  feature-user-auth.yaml                    # Slug-based name until Jira IDs are backfilled
+  feature-user-auth-jira-items.md           # Companion document for manual Jira creation
   README.md
 ```
 
 **YAML schema:**
 ```yaml
 epic:
-  id: EPIC-123                          # Jira key or generated slug
+  id: EPIC-123                          # Jira key, or generated slug (e.g. feature-user-auth) until Jira tickets are created
   title: "Feature: User Authentication"
   status: planning | active | complete  # Epic-level status
+
+  # Jira sync — tracks whether slug IDs have been replaced with real Jira keys
+  jira_sync:
+    status: pending | synced            # pending = slugs still in use; synced = all IDs are real Jira keys
+    epic_key: null                      # Populated after human provides Jira epic key
+    companion_doc: null                 # Path to companion Jira creation document (e.g. plans/feature-user-auth-jira-items.md)
 
   # Origin — where this work came from
   source:
