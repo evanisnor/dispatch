@@ -103,6 +103,7 @@ sequenceDiagram
                 PR-->>TaskAgent: Ready to Merge
                 TaskAgent->>PR: Add PR to Merge Queue
                 PR->>PrimaryAgent: Notify PR added to Merge Queue
+                TaskAgent->>PR: Watch merge queue for PR status
                 alt Merge queue succeeds
                     PR-->>LocalMain: Merge queue merges PR automatically
                     par
