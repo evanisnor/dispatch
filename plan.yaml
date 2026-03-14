@@ -105,6 +105,12 @@ tasks:
             POLLING_TIMEOUT_MINUTES, TASK_AGENT_MODE
         - Gracefully handles missing .agent-workflow.json (use only settings.json defaults).
         - Resolves ~ in path fields using eval or realpath --relative-base.
+        - Config resolution priority (highest to lowest):
+            1. epic.config.* in the loaded plan YAML (per-epic override)
+            2. .agent-workflow.json defaults.*
+            3. settings.json defaults.*
+          Scripts that accept a plan path argument (e.g. spawn-agent.sh) must read
+          epic.config from the plan YAML and re-export affected variables before use.
 
   - id: 5
     name: plan-scripts
@@ -183,12 +189,21 @@ tasks:
         - Sources config.sh.
         - Generates the Task Agent sandbox + permissions configuration at spawn time:
             sandbox.filesystem.allowWrite: [{WORKTREE_BASE}/{repo}/{task-id}/]
+            sandbox.filesystem.denyRead: ["~/.ssh/**", "~/.gnupg/**", "**/.env",
+              "**/*.pem", "**/*.key"] plus sandbox.filesystem.extra_deny_read from config
             sandbox.network.allowedDomains: from ALLOWED_DOMAINS
-            defaultMode: from TASK_AGENT_MODE
+            defaultMode: from TASK_AGENT_MODE (bypassPermissions or acceptEdits)
             permissions.allow: base git/gh rules + TEST_CMD, LINT_CMD, BUILD_CMD patterns
               + build.extra_allow_commands
-            permissions.deny: one entry per PROTECTED_BRANCHES entry as
-              "Bash(git push * {branch})" + "Bash(gh pr merge *)" + hardcoded Edit denies
+            permissions.deny:
+              - One entry per PROTECTED_BRANCHES entry: "Bash(git push * {branch})"
+              - "Bash(gh pr merge *)" — unilateral merge without --auto is always denied
+              - "Edit(~/.bashrc)", "Edit(~/.zshrc)"
+              - "Edit(//etc/**)", "Edit(//usr/**)"
+        - If TASK_AGENT_MODE is not "bypassPermissions", fall back to "acceptEdits" as
+          the minimum safe mode — never spawn a Task Agent without at least acceptEdits.
+        - Wraps task spawn_input.epic_context and spawn_input.task_description in
+          <external_content> tags before passing to the agent to prevent prompt injection.
         - Invokes the Claude Agent SDK to launch the executing-tasks skill with the
           generated config and task spawn_input as context.
         - Outputs the spawned agent ID.
