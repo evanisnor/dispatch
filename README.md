@@ -273,7 +273,6 @@ The workflow above will be implemented as a Claude plugin with three Skills — 
 agent-workflow/
   .claude-plugin/
     plugin.json               # Plugin manifest — name, version, description
-  .mcp.json                   # Jira MCP server configuration (see Plugin Manifest)
   settings.json               # Plugin defaults — committed (see Configuration)
   .agent-workflow.json        # Gitignored — per-project configuration (see Configuration)
   .agent-workflow.example.json  # Committed template — copy to .agent-workflow.json and edit
@@ -303,7 +302,7 @@ skills/orchestrating-agents/
     create-worktree.sh          # git worktree add
     spawn-planning-agent.sh     # Launch Planning Agent subprocess via Agent SDK
     spawn-agent.sh              # Launch Task Agent subprocess via Agent SDK
-    open-review-pane.sh         # tmux new-window showing git diff
+    open-review-pane.sh         # tmux new-window in the Orchestrating Agent's current session showing git diff
     close-review-pane.sh        # tmux kill-window
     rebase-worktrees.sh         # Rebase all active worktrees onto local main
     remove-worktree.sh          # git worktree remove
@@ -320,6 +319,7 @@ skills/orchestrating-agents/
 - Hard constraints: must never push code directly; must never merge PRs without human-approved diff; must serialize all plan writes through `save-plan.sh`; must wrap all external content in `<external_content>` tags before including in agent prompts (see [Security](#security))
 
 **`REVIEW.md`** must include:
+- Tmux targeting: all review panes must open in the **same tmux window session as the Orchestrating Agent**; `open-review-pane.sh` must resolve the current tmux session (via `$TMUX` or `tmux display-message -p '#S'`) and create a new window within that session — never create a new session
 - Structured format for forwarding rejection reasons to Task Agent (must include: which files, what change is expected, acceptance criteria)
 - When presenting a reviewer-requested change for human approval: include a direct link to the reviewer's PR comment so the human can respond directly if needed
 
@@ -547,31 +547,11 @@ The manifest identifies the plugin and is required for Claude Code to load it:
 
 Skills are namespaced under this plugin name. Users invoke them as `/agent-workflow:orchestrating-agents`, `/agent-workflow:planning-tasks`, and `/agent-workflow:executing-tasks`. The Orchestrating Agent is also activated automatically as the default agent via `settings.json` at the plugin root (see [Configuration](#configuration)).
 
-### `.mcp.json` — Jira MCP Server
+### Jira MCP Server
 
-The Jira MCP connection is declared at the plugin root so it activates automatically when the plugin is enabled. Users supply credentials via environment variables — no manual MCP configuration is required:
+The plugin does not ship a Jira MCP configuration. If `jira.enabled` is `true` in `.agent-workflow.json`, the Planning Agent expects a Jira MCP server to already be configured in the user's Claude Code environment. Which server to use and how to configure it is left to the user — many Jira MCP implementations exist and the choice depends on the user's Jira setup.
 
-```json
-{
-  "jira": {
-    "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-jira"],
-    "env": {
-      "JIRA_API_TOKEN": "${JIRA_API_TOKEN}",
-      "JIRA_BASE_URL": "${JIRA_BASE_URL}"
-    }
-  }
-}
-```
-
-When `jira.enabled` is `false` in `.agent-workflow.json`, the Planning Agent ignores the Jira MCP and uses slug IDs exclusively. The MCP server itself may still start — the disable flag controls agent behavior, not server launch.
-
-**Required environment variables (when Jira is enabled):**
-
-| Variable | Description |
-|---|---|
-| `JIRA_API_TOKEN` | Jira personal access token or API token |
-| `JIRA_BASE_URL` | Base URL of the Jira instance (e.g. `https://your-org.atlassian.net`) |
+If no Jira MCP is available, set `jira.enabled: false`. The Planning Agent will use slug IDs exclusively and generate a companion document for manual Jira ticket creation (see [Plan Document Structure](#plan-document-structure)).
 
 ---
 
