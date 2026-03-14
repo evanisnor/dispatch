@@ -488,7 +488,7 @@ tasks:
 
   - id: 16
     name: executing-skill-md
-    status: pending
+    status: done
     depends_on: [1, 15]
     description: >
       Write skills/executing-tasks/SKILL.md — the Task Agent's primary skill file.
