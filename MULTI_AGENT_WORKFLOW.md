@@ -213,3 +213,79 @@ sequenceDiagram
     Note over PrimaryAgent,Worktree: Primary Agent ensures all agent worktrees are rebased onto local main after each merge
 ```
 
+---
+
+## Implementation Plan: Claude Skills
+
+### Overview
+
+The workflow above will be implemented as two Claude Skills — one per agent role — following [Anthropic's Agent Skills best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
+
+### Skill 1: `orchestrating-agents` (Primary Agent)
+
+Responsible for planning, dependency tree management, Task Agent spawning, diff review, monitoring, and post-merge cleanup.
+
+```
+orchestrating-agents/
+  SKILL.md                  # Overview + planning/delegation workflow
+  PLANNING.md               # Task decomposition, dependency tree structure
+  REVIEW.md                 # Tmux diff review approval loop
+  PR_MONITORING.md          # PR/CI/merge queue monitoring
+  scripts/
+    create-worktree.sh      # git worktree add
+    spawn-agent.sh          # Launch Task Agent subprocess via Agent SDK
+    open-review-pane.sh     # tmux new-window showing git diff
+    close-review-pane.sh    # tmux kill-window
+    rebase-worktrees.sh     # Rebase all active worktrees onto local main
+    remove-worktree.sh      # git worktree remove
+    watch-pr-status.sh      # Poll gh pr status
+    watch-merge-queue.sh    # Poll merge queue status for a PR
+    load-plan.sh            # Load dependency tree from Plan Storage
+    save-plan.sh            # Persist dependency tree to Plan Storage
+```
+
+### Skill 2: `shepherding-pull-requests` (Task Agent)
+
+Responsible for implementation, opening draft PRs, responding to CI/review feedback, handling conflicts, and adding to the merge queue.
+
+```
+shepherding-pull-requests/
+  SKILL.md                  # Overview + PR lifecycle workflow
+  CI_FEEDBACK.md            # CI failure triage and fix workflow
+  CONFLICT_RESOLUTION.md    # Merge conflict resolution workflow
+  scripts/
+    open-draft-pr.sh        # gh pr create --draft
+    mark-pr-ready.sh        # gh pr ready
+    push-changes.sh         # git push
+    add-to-merge-queue.sh   # gh pr merge --auto
+    watch-merge-queue.sh    # Poll merge queue for this PR
+    watch-ci.sh             # Poll CI status for current commit
+```
+
+### System Dependencies
+
+| Dependency | Purpose |
+|---|---|
+| `git` | Worktree creation, rebase, branch management |
+| `gh` (GitHub CLI) | PR creation, CI status, merge queue, comments |
+| `tmux` | Review pane lifecycle management |
+| `jq` | JSON parsing for `gh` API output |
+| Claude Agent SDK | Task Agent spawning; Primary Agent passes context and receives results |
+| Plan Storage (git repo) | Versioned dependency trees stored as JSON/YAML in a dedicated plans repository |
+
+### Design Decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Task Agent spawning | Claude Agent SDK | Programmatic subprocess; structured context passing and result handling |
+| Plan Storage | Dedicated git repository | Versioned, shareable across machines |
+| Worktree location | Native git worktrees per repo | All active worktrees tracked in `~/.agents/` for Primary Agent visibility |
+
+### Skill Design Principles
+
+- **Low freedom** for fragile operations (worktree management, PR ops, merge queue) — implemented as specific scripts
+- **Medium freedom** for planning and review — pseudocode/checklists in markdown reference files
+- **Progressive disclosure** — `SKILL.md` as a lightweight overview; detail deferred to `PLANNING.md`, `REVIEW.md`, `CI_FEEDBACK.md`, etc.
+- **Feedback loops** — all CI and review steps follow a run → check → fix → repeat pattern
+- **Checklist workflows** for complex multi-step operations (planning phase, post-merge cleanup)
+
