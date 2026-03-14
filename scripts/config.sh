@@ -125,6 +125,9 @@ if [[ "${DIFF_MODE}" != "split" && "${DIFF_MODE}" != "unified" ]]; then
   DIFF_MODE="split"
 fi
 
+export PR_TEMPLATE_PATH
+PR_TEMPLATE_PATH="$(_expand_path "$(_cfg '.pr.template_path' '.defaults.pr_template_path' '')")"
+
 # --- Per-epic config override ---
 # Scripts that accept a plan path (e.g. spawn-agent.sh) should call
 # apply_epic_config <plan_yaml_path> after sourcing this file to layer

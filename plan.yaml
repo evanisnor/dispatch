@@ -640,7 +640,7 @@ tasks:
 
   - id: 24
     name: pr-description-template
-    status: pending
+    status: done
     depends_on: [15, 3]
     description: >
       Add a configurable PR description template so all Task Agents produce consistent,

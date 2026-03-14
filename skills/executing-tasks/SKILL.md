@@ -40,7 +40,7 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 1. **Implement** the task in your assigned worktree.
 2. **Complete pre-PR checklist** (see below).
 3. **Request diff approval** from the Primary Agent.
-4. **Open draft PR** once approval is received: call `open-draft-pr.sh`.
+4. **Open draft PR** once approval is received: call `pr-description.sh` (with task fields exported as env vars) to render the PR body, then pass the output to `open-draft-pr.sh`.
 5. **Watch CI** with `watch-ci.sh`. Fix failures autonomously up to `max_ci_fix_attempts` (see **CI_FEEDBACK.md**).
 6. **Mark PR ready** once CI passes: call `mark-pr-ready.sh`.
 7. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
