@@ -521,9 +521,25 @@ External content — PR review comments, CI logs, issue descriptions, Jira text,
 - `executing-tasks/CI_FEEDBACK.md` — CI log output
 - `executing-tasks/CONFLICT_RESOLUTION.md` — incoming commit messages and code during rebase
 
+**Defense-in-depth with sandboxing**: The defenses above protect Claude's reasoning from acting on injected instructions. The [sandbox](#permissions) provides a complementary OS-level layer: even if a prompt injection bypasses Claude's decision-making, the sandbox prevents the resulting Bash commands from reaching files or network destinations outside the defined boundaries.
+
 ### Secret Isolation
 
 Each task worktree is created by `create-worktree.sh`. The script must not copy `.env` files, credential files, or SSH keys into the new worktree. GitHub authentication must use a scoped `gh auth token`; no long-lived credentials should be present in the worktree working directory.
+
+The sandbox `denyRead` setting enforces this at the OS level, independent of scripting conventions in `create-worktree.sh`:
+
+```json
+{
+  "sandbox": {
+    "filesystem": {
+      "denyRead": ["~/.ssh", "~/.gnupg", "**/.env", "**/*.pem", "**/*.key"]
+    }
+  }
+}
+```
+
+These rules block all subprocess commands — including tools spawned transitively by `./gradlew` or `npm` — from reading credential files even if `create-worktree.sh` fails to exclude them.
 
 ---
 
