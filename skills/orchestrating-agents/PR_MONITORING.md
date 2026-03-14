@@ -58,6 +58,33 @@ Once a Task Agent calls `add-to-merge-queue.sh`, call `watch-merge-queue.sh <pr-
 2. Await instructions: re-queue or abandon the task.
 3. On abandon: update task `status: cancelled` in the plan; flag dependents `blocked`.
 
+## Liveness Checks
+
+After each polling cycle during PR monitoring, call `check-agent-liveness.sh <agent_id> <last_activity_timestamp>` for every `in_progress` Task Agent.
+
+### Exit 1 — Dead
+
+Agent has stopped or errored. Immediately escalate to the human with:
+- `agent_id` and `task_id`.
+- Last known activity timestamp.
+- Option to restart the agent (up to `MAX_AGENT_RESTARTS`) or abandon the task.
+
+On restart: call `spawn-agent.sh <task-id> <plan-path>` and update `agent_id` in the plan via `save-plan.sh`.
+On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
+
+### Exit 2 — Stalled
+
+Agent is running but has produced no output within `POLLING_TIMEOUT_MINUTES`. Notify the human:
+
+> Agent `<agent_id>` for task `<task_id>` appears stalled — no activity for N minutes.
+> Options: (1) wait another polling cycle, (2) restart the agent, (3) abandon the task.
+
+Handle restart and abandon the same as exit 1 above.
+
+### Exit 0 — Healthy
+
+No action required. Continue the polling loop.
+
 ## Stalled Reviewer Comments
 
 If the Task Agent posts a clarifying question on the PR in response to a reviewer comment and receives no response within `POLLING_TIMEOUT_MINUTES`, notify the human with:

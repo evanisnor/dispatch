@@ -777,7 +777,7 @@ tasks:
 
   - id: 27
     name: agent-liveness-checks
-    status: pending
+    status: done
     depends_on: [9]
     description: >
       Add periodic liveness checks to the Orchestrating Agent's monitoring loop so that
