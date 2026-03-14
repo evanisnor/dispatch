@@ -103,8 +103,8 @@ sequenceDiagram
                 PR-->>TaskAgent: Ready to Merge
                 TaskAgent->>PR: Add PR to Merge Queue
                 PR->>PrimaryAgent: Notify PR added to Merge Queue
-                alt Merge succeeds
-                    PR-->>LocalMain: Merge pull request
+                alt Merge queue succeeds
+                    PR-->>LocalMain: Merge queue merges PR automatically
                     par
                         LocalMain->>OriginMain: Rebase local main onto origin main (remove duplicates)
                         OriginMain-->>LocalMain: Local main synced with origin main
