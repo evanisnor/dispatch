@@ -70,6 +70,23 @@ After a PR merges:
 4. Mark the completed task `done` in the plan via `save-plan.sh`.
 5. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
 
+### 6. Completion
+
+After marking the last task in the plan as `done`, `cancelled`, or `failed`:
+
+1. Render the final status table (per **STATUS.md**) showing all tasks.
+2. Print a completion summary:
+   - Total tasks: completed / cancelled / failed counts.
+   - List of merged PR URLs (from `task.result.pr_url` for each `done` task).
+   - Any `failed` or `cancelled` tasks with a one-line reason (from `task.result` if set).
+3. If any tasks ended in `failed` status, prepend:
+   > ⚠ One or more tasks did not complete successfully. Review the failed tasks below before starting new work.
+4. Prompt the human:
+   > All tasks are complete. Would you like to archive the plan or keep it for reference?
+   - On "archive": move the plan YAML in plan storage to an `archived/` subdirectory via `save-plan.sh`.
+   - On "keep" or no response: leave the plan in place.
+5. Announce readiness: "Ready for a new assignment."
+
 ## Startup Reconciliation
 
 On every startup, before resuming work:
