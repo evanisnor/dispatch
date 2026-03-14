@@ -81,6 +81,9 @@ agent-workflow/
 
 When implementing tasks from `plan.yaml`:
 - Complete one task at a time in dependency order.
+- Before starting a task, set its `status` to `in_progress` in `plan.yaml`.
+- After completing a task, set its `status` to `done` in `plan.yaml`.
+- Include the `plan.yaml` status update in the task's commit.
 - After completing each task, commit and push before starting the next.
 - Commit message format: `Task N: <short description>`
 
