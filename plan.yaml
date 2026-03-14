@@ -572,6 +572,70 @@ tasks:
             log text verbatim.
           - Reference: Security → Prompt Injection section of SPEC.md.
 
+  - id: 21
+    name: tmux-pane-split
+    status: pending
+    depends_on: [8, 10]
+    description: >
+      Fix the diff review workflow to split a pane within the Orchestrating Agent's current
+      tmux window instead of creating a new window.
+
+      Changes required:
+        skills/orchestrating-agents/scripts/open-review-pane.sh:
+          - Replace `tmux new-window` with `tmux split-window`.
+          - Remove the pane-name tmux targeting (panes are identified by ID, not name).
+          - Output the pane ID (#{pane_id}) instead of a window ID.
+          - Update the comment block: "Splits a new pane in the SAME tmux window as the
+            Orchestrating Agent. Never creates a new tmux session or window."
+
+        skills/orchestrating-agents/scripts/close-review-pane.sh:
+          - Replace `tmux kill-window -t "${SESSION}:${WINDOW}"` with `tmux kill-pane -t "${PANE_ID}"`.
+          - Update parameter name and comment from window-name-or-id to pane-id.
+
+        skills/orchestrating-agents/REVIEW.md:
+          - Update "Tmux Targeting Rules" section: replace "A new window is created within
+            that session" with "A new pane is split within the current window".
+          - Update all step references from "opens a window" to "opens a pane".
+
+  - id: 19
+    name: delta-diff-integration
+    status: pending
+    depends_on: [8]
+    description: >
+      Integrate delta (https://github.com/dandavison/delta) into the diff review workflow
+      so that review panes display syntax-highlighted, side-by-side diffs instead of raw
+      git diff output.
+
+      Changes required:
+        skills/orchestrating-agents/scripts/open-review-pane.sh:
+          - Check whether delta is available on PATH (command -v delta).
+          - If available, run: git -C {worktree} diff HEAD | delta
+          - If not available, fall back to: git -C {worktree} diff HEAD
+          - The tmux window must still be named as before (review-{task-id}, etc.).
+
+        README.md:
+          - Add `delta` to the Requirements section alongside git, gh, tmux, jq, yq.
+          - Note that delta is optional but recommended for enhanced diff display.
+
+  - id: 20
+    name: brewfile
+    status: pending
+    depends_on: [19]
+    description: >
+      Add a Brewfile to the repository root that installs all macOS Homebrew dependencies
+      required to run the plugin.
+
+      The Brewfile must include:
+        brew "git"
+        brew "gh"
+        brew "tmux"
+        brew "jq"
+        brew "yq"
+        brew "git-delta"
+
+      Also update README.md Installation section to mention that users on macOS can run
+      `brew bundle` from the repo root to install all dependencies at once.
+
   - id: 18
     name: executing-conflict-md
     status: done
