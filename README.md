@@ -98,14 +98,32 @@ The Orchestrating Agent activates automatically if you have `settings.json` inst
 
 ### 📋 Give it an assignment
 
-Describe the work in plain language:
+Assignments can take several forms — plain language, references to existing documents, or Jira tickets.
+
+**Plain language**
 
 ```
 Build a user authentication system: registration, login, JWT tokens, and a
 middleware guard for protected routes.
 ```
 
-The Orchestrating Agent will ask for your approval before spawning a Planning Agent.
+**Point to a PRD or design document**
+
+```
+Create an implementation plan using docs/prd-notifications.md.
+```
+
+The Planning Agent will read the document and decompose it into tasks. You can also paste content directly into the prompt if you prefer not to reference a file.
+
+**Reference a Jira epic**
+
+```
+Implement epic PROJ-42. Jira is configured in .agent-workflow.json.
+```
+
+The Planning Agent reads the epic and its child issues via the Jira MCP server, builds a plan keyed to the real ticket IDs, and keeps them in sync as work progresses.
+
+In all cases, the Orchestrating Agent will ask for your approval before spawning a Planning Agent.
 
 ### 🗺️ Review and approve the plan
 
