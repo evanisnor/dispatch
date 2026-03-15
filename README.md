@@ -22,7 +22,7 @@ Dispatch is a Claude Code plugin that structures this new dynamic. You describe 
 - `jq` and `yq` (for config and plan parsing)
 - A dedicated **plan storage git repository** (can be private, can be empty to start)
 - Optionally: [`delta`](https://github.com/dandavison/delta) for syntax-highlighted diff review (falls back to plain `git diff` if not installed)
-- Optionally: an MCP server for your issue tracker (Jira, Linear, GitHub Issues, etc.)
+- Optionally: issue tracker access (Jira, Linear, GitHub Issues, etc.) via whichever integration your Claude environment provides
 
 ## Installation
 
