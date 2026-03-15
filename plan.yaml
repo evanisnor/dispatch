@@ -1137,8 +1137,11 @@ tasks:
         SPEC.md, CLAUDE.md, README (if any):
           Update project name references throughout.
 
-        Note: the GitHub repository rename (agent-workflow → dispatch) is a
-        separate manual step outside the scope of this task.
+        GitHub repository rename:
+          gh repo rename dispatch
+          git remote set-url origin git@github.com:evanisnor/dispatch.git
+          GitHub will redirect the old URL, but update any hardcoded references
+          to evanisnor/agent-workflow in docs and scripts.
 
   - id: 33
     name: load-plan-archive-plan-scripts
