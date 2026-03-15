@@ -117,6 +117,9 @@ fi
 export PR_TEMPLATE_PATH
 PR_TEMPLATE_PATH="$(_expand_path "$(_cfg '.pr.template_path' '.defaults.pr_template_path' '')")"
 
+export PR_DESCRIPTION_SKILL
+PR_DESCRIPTION_SKILL="$(_cfg '.pr.description_skill' '.defaults.pr_description_skill' '')"
+
 # --- Per-epic config override ---
 # Scripts that accept a plan path (e.g. spawn-agent.sh) should call
 # apply_epic_config <plan_yaml_path> after sourcing this file to layer

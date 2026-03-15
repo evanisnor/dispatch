@@ -40,12 +40,19 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 1. **Implement** the task in your assigned worktree.
 2. **Complete pre-PR checklist** (see below).
 3. **Request diff approval** from the Primary Agent.
-4. **Open draft PR** once approval is received: export the following env vars, then call `pr-description.sh` to render the PR body and pass the output to `open-draft-pr.sh`:
+4. **Open draft PR** once approval is received: generate the PR body, then pass it to `open-draft-pr.sh`. Prepare the following values before generating the body:
    - `TASK_ID` — task ID from the plan.
    - `TASK_TITLE` — task title from the plan.
    - `EPIC_TITLE` — epic title from the plan.
    - `TASK_DESCRIPTION` — a concise bulleted list of **what** was implemented. Do not copy the plan description verbatim. Use 3–7 bullets. Format code symbols and file paths with backticks.
    - `TASK_CONTEXT` — 1–2 sentences explaining **why** this task exists: what problem it solves or what it enables for the rest of the epic. Do not write "Part of epic X" — that is not a why.
+
+   **Choosing how to generate the PR body:**
+   - If `PR_DESCRIPTION_SKILL` is set (non-empty): spawn the named skill via the Agent tool, passing the task values above in the prompt, and use the agent's returned text as the PR body.
+   - If `PR_DESCRIPTION_SKILL` is empty: export the values as env vars and call `pr-description.sh` to render the PR body.
+
+   Pass the resulting PR body to `open-draft-pr.sh`.
+
 5. **Watch CI** with `watch-ci.sh`. Fix failures autonomously up to `max_ci_fix_attempts` (see [CI_FEEDBACK.md](CI_FEEDBACK.md) for the full triage and fix workflow).
 6. **Mark PR ready** once CI passes: call `mark-pr-ready.sh`.
 7. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.

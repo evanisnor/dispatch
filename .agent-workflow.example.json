@@ -25,7 +25,8 @@
   },
 
   "pr": {
-    "template_path": ""
+    "template_path": "",
+    "description_skill": ""
   },
 
   "defaults": {

@@ -67,6 +67,17 @@ Default diff display mode in review panes. `"split"` uses `delta --side-by-side`
 
 ---
 
+### `pr.description_skill`
+
+| | |
+|---|---|
+| Type | `string` |
+| Default | `""` (built-in `pr-description.sh`) |
+
+Name of a delegate skill to invoke for authoring PR descriptions. When set, the Task Agent spawns this skill via the Agent tool instead of calling `pr-description.sh`. The skill receives the full task context (task ID, title, description, context, epic title, branch) and must return the PR body as its output. Leave empty to use the built-in template.
+
+---
+
 ### `pr.template_path`
 
 | | |

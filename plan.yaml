@@ -1144,6 +1144,35 @@ tasks:
           Type: string, Default: "". Note that it must end with "/" for
           directory-style prefixes (e.g. "feat/", "users/evan/").
 
+  - id: 32
+    name: pr-description-delegate-skill
+    status: done
+    depends_on: [3, 29, 14]
+    description: >
+      Add a pr.description_skill config key so users can provide a delegate skill
+      for authoring PR descriptions instead of using the built-in pr-description.sh.
+
+      Changes required:
+        scripts/config.sh:
+          Export PR_DESCRIPTION_SKILL using _cfg '.pr.description_skill' '.defaults.pr_description_skill' ''.
+          Place it after the PR_TEMPLATE_PATH block.
+
+        settings.json:
+          Add "pr_description_skill": "" to the defaults object.
+
+        .agent-workflow.example.json:
+          Add "description_skill": "" to the pr object alongside template_path.
+
+        skills/config/SKILL.md:
+          Document pr.description_skill in the Full Configuration Reference section.
+          Type: string, Default: "" (built-in pr-description.sh).
+
+        skills/executing-tasks/SKILL.md:
+          Update step 4 (Open draft PR) to check PR_DESCRIPTION_SKILL:
+          - If set: spawn the named skill via the Agent tool with task context in the prompt,
+            use the agent's returned text as the PR body.
+          - If empty: use pr-description.sh as before.
+
   - id: 18
     name: executing-conflict-md
     status: done
