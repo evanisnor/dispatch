@@ -60,71 +60,29 @@ graph TD
 
 ## Installation
 
-**1. Clone the plugin**
-
 ```sh
+# 1. Clone the plugin
 git clone https://github.com/evanisnor/agent-workflow ~/.claude/plugins/agent-workflow
-```
 
-**2. Install dependencies (macOS)**
-
-```sh
+# 2. Install dependencies (macOS)
 brew bundle --file ~/.claude/plugins/agent-workflow/Brewfile
-```
 
-Or install manually: `git`, `gh`, `tmux`, `jq`, `yq`, and optionally `git-delta`.
+# 3. Start a tmux session (diff review splits panes in the current window)
+tmux new-session -s work
 
-**3. Enable the plugin in Claude Code**
-
-Pass the plugin directory when starting Claude Code:
-
-```sh
+# 4. Start Claude with the plugin loaded
 claude --plugin-dir ~/.claude/plugins/agent-workflow
 ```
 
-Or set `CLAUDE_PLUGIN_DIR` in your environment to load it automatically every session.
-
-**4. Create your plan storage repository**
-
-```sh
-mkdir -p ~/plans && cd ~/plans && git init && git remote add origin <your-remote-url>
-```
-
-The plan storage repo holds plan YAML files and is shared across projects. It can be a private repo on GitHub.
-
 **5. Configure your project**
 
-Copy the example config into your project root and fill in your values:
+In your project directory, run the config skill to create `.agent-workflow.json` interactively:
 
-```sh
-cp ~/.claude/plugins/agent-workflow/.agent-workflow.example.json .agent-workflow.json
+```
+/agent-workflow:config setup
 ```
 
-Edit `.agent-workflow.json`:
-
-```json
-{
-  "plan_storage": {
-    "repo_path": "~/plans"
-  },
-  "worktree": {
-    "base_dir": "~/.agents"
-  },
-  "git": {
-    "protected_branches": ["main"]
-  }
-}
-```
-
-The file is gitignored — it should never be committed.
-
-**6. Start a tmux session**
-
-The diff review workflow splits panes inside your current tmux window. Start a session before invoking the Orchestrating Agent:
-
-```sh
-tmux new-session -s work
-```
+This walks you through the required fields (plan storage path, worktree directory) and optional settings. The file is gitignored — it should never be committed. To review the full config schema at any time, run `/agent-workflow:config`.
 
 ## Usage
 
