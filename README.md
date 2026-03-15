@@ -183,13 +183,13 @@ When you're ready to review, tell the Orchestrating Agent:
 ready to review PR #42
 ```
 
-It presents the review context in chat and opens a tmux window showing the full diff. You review, ask questions, and when satisfied:
+It presents the review context in chat and opens a tmux window showing the full diff. You review, ask questions, and when satisfied, explicitly approve:
 
 ```
 approve
 ```
 
-The Orchestrating Agent calls `gh pr review --approve` on your behalf. Comments are yours to make directly on GitHub — Dispatch doesn't generate or post them for you.
+No PR is ever approved without your instruction. Dispatch submits the approval to GitHub only when you say so. Comments are yours to make directly on GitHub — Dispatch doesn't generate or post them for you.
 
 Pending reviews appear in `/status` so you always know what's waiting for your attention.
 
