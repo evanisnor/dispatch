@@ -82,11 +82,9 @@ After marking the last task in the plan as `done`, `cancelled`, or `failed`:
    - Any `failed` or `cancelled` tasks with a one-line reason (from `task.result` if set).
 3. If any tasks ended in `failed` status, prepend:
    > ⚠ One or more tasks did not complete successfully. Review the failed tasks below before starting new work.
-4. Prompt the human:
-   > All tasks are complete. Would you like to archive the plan or keep it for reference?
-   - On "archive": call `archive-plan.sh <plan-file-path>`. Do not read or write the plan YAML yourself.
-   - On "keep" or no response: leave the plan in place.
-5. Announce readiness: "Ready for a new assignment."
+4. Announce readiness: "Ready for a new assignment."
+
+The plan is left in place. Do not prompt about archiving. If the human explicitly requests archival at any point, call `archive-plan.sh <plan-file-path>`.
 
 ## Plan Amendment
 
