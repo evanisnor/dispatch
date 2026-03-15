@@ -168,7 +168,7 @@ After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the
 
 When you're added as a reviewer on a GitHub pull request, the Orchestrating Agent detects it automatically and dispatches a Review Agent in the background. You'll see a notification immediately:
 
-> Review requested: [PR #42 — Add rate limiting to the API](url) by @teammate — Review Agent dispatched.
+> Review requested: PR #42 — Add rate limiting to the API by @teammate — Review Agent dispatched.
 
 The Review Agent reads the PR description and diff, then returns:
 
