@@ -29,12 +29,16 @@ tasks:
 
 
 
+
+
         .claude-plugin/
         scripts/
         skills/orchestrating-agents/scripts/
         skills/planning-tasks/
         skills/executing-tasks/scripts/
       Touch placeholder files for every file listed in the spec so later tasks can fill content without worrying about parent directories:
+
+
 
 
 
@@ -110,6 +114,8 @@ tasks:
 
 
 
+
+
         name: "agent-workflow"
         description: (as specified)
         version: "1.0.0"
@@ -143,11 +149,15 @@ tasks:
 
 
 
+
+
         - "agent": "orchestrating-agents"  — activates Orchestrating Agent as default
         - "defaults" object with: max_ci_fix_attempts=3, max_agent_restarts=2,
           polling_timeout_minutes=60, task_agent_mode="bypassPermissions"
 
       .agent-workflow.example.json (committed template):
+
+
 
 
 
@@ -192,6 +202,8 @@ tasks:
 
 
 
+
+
         - Ensure .agent-workflow.json is listed (per-project config must never be committed).
   - id: 4
     name: config-sh
@@ -201,6 +213,8 @@ tasks:
       Write scripts/config.sh — the shared configuration loader sourced by all skill scripts.
 
       Requirements:
+
+
 
 
 
@@ -263,12 +277,16 @@ tasks:
 
 
 
+
+
         - Accepts a plan file path argument.
         - Sources config.sh to get PLAN_REPO.
         - Outputs the YAML content of the requested plan file from the plan repository.
         - Exits non-zero if the file does not exist.
 
       scripts/save-plan.sh:
+
+
 
 
 
@@ -299,6 +317,8 @@ tasks:
         - Uses git pull --rebase before writing to minimise conflicts.
 
       scripts/watch-merge-queue.sh:
+
+
 
 
 
@@ -351,6 +371,8 @@ tasks:
 
 
 
+
+
         - Accepts: repo path, task ID, branch name.
         - Sources config.sh to get WORKTREE_BASE.
         - Runs: git worktree add {WORKTREE_BASE}/{repo}/{task-id} -b {branch}
@@ -377,11 +399,15 @@ tasks:
 
 
 
+
+
         - Accepts a worktree path.
         - Runs: git worktree remove --force {path}
         - Verifies the path is under WORKTREE_BASE before removing (safety check).
 
       rebase-worktrees.sh:
+
+
 
 
 
@@ -433,6 +459,8 @@ tasks:
 
 
 
+
+
         - Accepts: plan storage path, assignment description.
         - Sources config.sh.
         - Invokes the Claude Agent SDK to launch the planning-tasks skill as a subprocess.
@@ -440,6 +468,8 @@ tasks:
         - Waits for the agent to return a finalized plan path and prints it.
 
       spawn-agent.sh:
+
+
 
 
 
@@ -508,6 +538,8 @@ tasks:
 
 
 
+
+
         - Accepts: pane name (e.g. "review-TASK-1"), worktree path.
         - Resolves current tmux session via $TMUX or tmux display-message -p '#S'.
         - Must open in the SAME session as the Orchestrating Agent — never create a new session.
@@ -515,6 +547,8 @@ tasks:
         - Outputs the window ID.
 
       close-review-pane.sh:
+
+
 
 
 
@@ -557,6 +591,8 @@ tasks:
 
 
 
+
+
         - Accepts a PR URL or number.
         - Polls gh pr view --json state,statusCheckRollup,reviewDecision at a configurable interval.
         - Reads POLLING_TIMEOUT_MINUTES from config.sh.
@@ -572,6 +608,8 @@ tasks:
       Write skills/orchestrating-agents/SKILL.md — the Orchestrating Agent's primary skill file.
 
       Required sections (per spec):
+
+
 
 
 
@@ -650,6 +688,8 @@ tasks:
 
 
 
+
+
         Tmux targeting rules:
           - All review panes must open in the SAME tmux window session as the Orchestrating Agent.
           - open-review-pane.sh must resolve the current session via $TMUX or
@@ -682,6 +722,8 @@ tasks:
       Write skills/orchestrating-agents/PR_MONITORING.md — PR, CI, and merge queue monitoring.
 
       Required content (per spec):
+
+
 
 
 
@@ -753,6 +795,8 @@ tasks:
 
 
 
+
+
         Frontmatter:
           name: planning-tasks
           description: "Decomposes projects into atomic tasks, builds dependency trees,
@@ -785,6 +829,8 @@ tasks:
       Write skills/planning-tasks/PLANNING.md — task decomposition and dependency tree rules.
 
       Required content (per spec):
+
+
 
 
 
@@ -861,6 +907,8 @@ tasks:
 
 
 
+
+
         Companion Jira creation document:
           - When no Jira epic exists, generate a markdown file alongside the plan YAML named
             {slug}-jira-items.md in the plan repository.
@@ -912,6 +960,8 @@ tasks:
 
 
 
+
+
         - Accepts: branch name, PR title, PR body.
         - Sources config.sh.
         - Runs: gh pr create --draft --title "{title}" --body "{body}" --base main
@@ -937,11 +987,15 @@ tasks:
 
 
 
+
+
         - Accepts a PR URL or number.
         - Runs: gh pr ready {pr}
         - Verifies the PR is not targeting a protected branch before marking ready.
 
       push-changes.sh:
+
+
 
 
 
@@ -986,12 +1040,16 @@ tasks:
 
 
 
+
+
         - Accepts a PR URL or number.
         - Runs: gh pr merge --auto {pr}
         - Note: gh pr merge (without --auto) is denied by sandbox deny rules; this script
           uses --auto only.
 
       watch-ci.sh:
+
+
 
 
 
@@ -1025,6 +1083,8 @@ tasks:
       Write skills/executing-tasks/SKILL.md — the Task Agent's primary skill file.
 
       Required sections (per spec):
+
+
 
 
 
@@ -1116,6 +1176,8 @@ tasks:
 
 
 
+
+
         CI fix loop:
           1. Receive CI failure notification.
           2. Run watch-ci.sh to get failure summary (state-change summaries only).
@@ -1147,6 +1209,8 @@ tasks:
       Write skills/executing-tasks/CONFLICT_RESOLUTION.md — merge conflict resolution workflow.
 
       Required content (per spec):
+
+
 
 
 
@@ -1217,6 +1281,8 @@ tasks:
 
 
 
+
+
         skills/orchestrating-agents/scripts/open-review-pane.sh:
           - Check whether delta is available on PATH (command -v delta).
           - If available, run: git -C {worktree} diff HEAD | delta
@@ -1234,6 +1300,8 @@ tasks:
       Add a Brewfile to the repository root that installs all macOS Homebrew dependencies required to run the plugin.
 
       The Brewfile must include:
+
+
 
 
 
@@ -1289,6 +1357,8 @@ tasks:
 
 
 
+
+
         skills/orchestrating-agents/scripts/open-review-pane.sh:
           - Replace `tmux new-window` with `tmux split-window`.
           - Remove the pane-name tmux targeting (panes are identified by ID, not name).
@@ -1314,6 +1384,8 @@ tasks:
       The mode controls how delta renders the diff: side-by-side ("split") or unified ("unified", the default when delta is absent). When delta is not installed, this setting has no effect.
 
       Changes required:
+
+
 
 
 
@@ -1386,12 +1458,16 @@ tasks:
 
 
 
+
+
         1. Natural language: the user asks anything resembling "what is the agent status",
            "show me what the agents are doing", "status update", etc.
         2. Slash command: /agent-workflow:status — a dedicated skill that instructs the
            Orchestrating Agent to render the status table immediately.
 
       Changes required:
+
+
 
 
 
@@ -1488,6 +1564,8 @@ tasks:
 
 
 
+
+
         ## What
         {task_description}
 
@@ -1522,6 +1600,8 @@ tasks:
 
 
 
+
+
         {task_id}          — task ID from plan YAML
         {task_title}       — task title from plan YAML
         {task_description} — task description from plan YAML
@@ -1531,6 +1611,8 @@ tasks:
         {worktree}         — worktree path
 
       Changes required:
+
+
 
 
 
@@ -1606,6 +1688,8 @@ tasks:
 
 
 
+
+
         skills/orchestrating-agents/SKILL.md:
           - Add a "Completion" section after "Post-Merge Cleanup".
           - After marking the last task done, the Orchestrating Agent must:
@@ -1632,6 +1716,8 @@ tasks:
       Define how the Orchestrating Agent handles mid-flight plan changes: adding new tasks, splitting an existing task, or cancelling tasks after work has started.
 
       Changes required:
+
+
 
 
 
@@ -1715,6 +1801,8 @@ tasks:
 
 
 
+
+
         skills/orchestrating-agents/scripts/check-agent-liveness.sh (new script):
           - Accepts: agent_id, last_activity_timestamp (ISO 8601), stall_timeout_minutes.
           - Reads POLLING_TIMEOUT_MINUTES from config.sh as the default stall timeout if
@@ -1744,6 +1832,8 @@ tasks:
       Add a /agent-workflow:help skill that lists available slash commands and gives natural language prompt examples so new users know how to interact with the plugin.
 
       Changes required:
+
+
 
 
 
@@ -1815,6 +1905,8 @@ tasks:
       Add a /agent-workflow:config skill that documents the full configuration schema and helps the user set up or update their .agent-workflow.json interactively.
 
       Changes required:
+
+
 
 
 
@@ -1955,6 +2047,8 @@ tasks:
 
 
 
+
+
         skills/orchestrating-agents/SKILL.md:
           - Add a "Startup Greeting" section immediately after "Startup Reconciliation".
           - After completing startup reconciliation, the agent must output a greeting
@@ -1992,6 +2086,8 @@ tasks:
       Add a configurable branch prefix so teams can enforce naming conventions (e.g. "feat/", "users/evan/") on all task branches.
 
       Changes required:
+
+
 
 
 
@@ -2064,6 +2160,8 @@ tasks:
 
 
 
+
+
         scripts/config.sh:
           Export PR_DESCRIPTION_SKILL using _cfg '.pr.description_skill' '.defaults.pr_description_skill' ''.
           Place it after the PR_TEMPLATE_PATH block.
@@ -2110,10 +2208,14 @@ tasks:
 
 
 
+
+
         Output plan YAML from plan storage to stdout.
         Usage: load-plan.sh <plan-file-path>
 
       scripts/archive-plan.sh:
+
+
 
 
 
@@ -2156,6 +2258,8 @@ tasks:
 
 
 
+
+
         Add "Plan Update Rule" section: always load-plan.sh | yq patch | save-plan.sh.
         Never construct YAML from memory. Update hard constraint to match.
         Update Completion section to use archive-plan.sh instead of save-plan.sh for archival.
@@ -2167,6 +2271,8 @@ tasks:
       Rebrand the project from "agent-workflow" to "Dispatch".
 
       Changes required:
+
+
 
 
 
@@ -2239,12 +2345,16 @@ tasks:
 
 
 
+
+
         Detect merge queue and CI/review requirements via gh api.
         Export MERGE_QUEUE_ENABLED, HAS_REQUIRED_CHECKS, HAS_REQUIRED_REVIEWS.
         Check both modern rulesets API and classic branch protection, handling
         404s and missing features gracefully.
 
       skills/executing-tasks/SKILL.md:
+
+
 
 
 
@@ -2274,6 +2384,8 @@ tasks:
         Update Authority Matrix and hard constraints to match.
 
       Also update skills/config/SKILL.md setup mode:
+
+
 
 
 
@@ -2323,12 +2435,16 @@ tasks:
 
 
 
+
+
         Add verification defaults under defaults.*:
           verification_manual_gate: false
           verification_startup_command: ""
           verification_skill: ""
 
       .dispatch.example.json:
+
+
 
 
 
@@ -2358,6 +2474,8 @@ tasks:
           }
 
       skills/config/SKILL.md:
+
+
 
 
 
@@ -2415,6 +2533,8 @@ tasks:
 
 
 
+
+
         Add three new rows to the Configuration schema table for the new keys.
   - id: 37
     name: verification-pane-scripts
@@ -2424,6 +2544,8 @@ tasks:
       Add open-verification-pane.sh and close-verification-pane.sh scripts to skills/orchestrating-agents/scripts/.
 
       open-verification-pane.sh:
+
+
 
 
 
@@ -2453,6 +2575,8 @@ tasks:
         Follow the same tmux targeting pattern as open-review-pane.sh.
 
       close-verification-pane.sh:
+
+
 
 
 
@@ -2503,6 +2627,8 @@ tasks:
 
 
 
+
+
         Add a new "Verification Gate" section after the Initial Diff Review Loop.
 
         Flow:
@@ -2527,6 +2653,8 @@ tasks:
         Note: If both skill and manual_gate are set, skill runs first; manual gate follows.
 
       skills/orchestrating-agents/SKILL.md:
+
+
 
 
 
@@ -2594,6 +2722,8 @@ tasks:
 
 
 
+
+
         Authority Matrix: add "Open/close tmux plan review panes — Autonomous".
         Planning Phase steps 5-6: PA writes to temp file, returns temp path; OA opens
           review-plan-<slug> window via open-plan-review-pane.sh, awaits human approval,
@@ -2617,11 +2747,15 @@ tasks:
 
 
 
+
+
         Revise workflow steps 5-8: PA writes YAML to /tmp/dispatch-plan-<slug>.yaml
           and returns temp path; save-plan.sh is only called after OA signals approval;
           if OA relays rejection, PA revises the temp file and returns updated path.
 
       skills/orchestrating-agents/REVIEW.md:
+
+
 
 
 
@@ -2663,8 +2797,12 @@ tasks:
 
 
 
+
+
         "jira": { "enabled": true }
       With:
+
+
 
 
 
@@ -2694,6 +2832,8 @@ tasks:
       Remove: JIRA_ENABLED export block and JIRA_BASE_URL export block.
 
       Add after PROTECTED_BRANCHES:
+
+
 
 
 
@@ -2742,10 +2882,14 @@ tasks:
 
 
 
+
+
         If ISSUE_TRACKING_TOOL is empty, skip all tracker operations and use slug IDs exclusively.
         If set, proceed according to ISSUE_TRACKING_READ_ONLY.
 
       Write-Enabled Mode (read_only: false) section:
+
+
 
 
 
@@ -2771,6 +2915,8 @@ tasks:
         On partial failure: record successful IDs, leave failed tasks as slugs, report to Primary Agent.
 
       Read-Only Mode (read_only: true) section:
+
+
 
 
 
@@ -2818,6 +2964,8 @@ tasks:
 
 
 
+
+
         After PR merges, if ISSUE_TRACKING_TOOL is set and ISSUE_TRACKING_READ_ONLY is false:
         1. Mark corresponding issue done/closed via tracker MCP tools.
         2. Link merged PR URL to the issue (where supported).
@@ -2825,6 +2973,8 @@ tasks:
         4. Report to Primary Agent.
 
       Security section:
+
+
 
 
 
@@ -2866,6 +3016,8 @@ tasks:
 
 
 
+
+
         issue_tracking:
           tool: jira              # mirrors issue_tracking.tool from config; null if not configured
           read_only: false        # mirrors issue_tracking.read_only from config
@@ -2886,6 +3038,8 @@ tasks:
       Frontmatter description: "manages Jira sync" → "manages issue tracking sync"; "backfilling Jira IDs" → "backfilling issue tracker IDs".
 
       Identity bullets:
+
+
 
 
 
@@ -2984,6 +3138,8 @@ tasks:
 
 
 
+
+
         export ISSUE_TRACKING_SKILL
         ISSUE_TRACKING_SKILL="$(_cfg '.issue_tracking.skill' '.defaults.issue_tracking_skill' '')"
 
@@ -3035,6 +3191,8 @@ tasks:
 
 
 
+
+
         - Guard: only runs if ISSUE_TRACKING_TOOL is set and ISSUE_TRACKING_READ_ONLY is false
         - If ISSUE_TRACKING_SKILL is set: spawn the named skill via Agent tool with operation=close_issue, task_id (real tracker ID from plan), task_title, pr_url
         - If ISSUE_TRACKING_SKILL is empty: close and link the issue using the tracker's own integration directly, per ISSUE_TRACKING.md
@@ -3062,10 +3220,14 @@ tasks:
 
 
 
+
+
         Type: string. Default: "" (uses built-in tracker integration).
         Description: Name of a delegate skill for all tracker operations. When set, the Planning Agent and Task Agent spawn this skill via the Agent tool. The skill receives a structured prompt with the operation type (create_issues, generate_companion, backfill_ids, or close_issue) and relevant context, and returns structured output (JSON for ID operations, markdown for companion doc, confirmation text for close). Leave empty to use the built-in integration.
 
       Setup Mode: After the read_only prompt ("autonomous/manual"), add:
+
+
 
 
 
@@ -3107,9 +3269,13 @@ tasks:
 
 
 
+
+
         | issue_tracking.skill | string | "" | Name of a delegate skill for all tracker operations. When set, invoked instead of built-in integration. Leave empty to use the built-in approach. |
 
       Issue Tracking Integration section: Add a third paragraph after the two existing mode paragraphs:
+
+
 
 
 
@@ -3152,6 +3318,8 @@ tasks:
 
 
 
+
+
         1a. Update the plan YAML: load the plan via load-plan.sh, patch the task's status to in_progress using yq, pipe to save-plan.sh. Use the same load → patch → save pattern documented in the Orchestrating Agent:
             load-plan.sh <plan-path> | yq e '(.tasks[] | select(.id == "<task-id>")).status = "in_progress"' - | save-plan.sh <plan-path>
         1b. If ISSUE_TRACKING_TOOL is set and ISSUE_TRACKING_READ_ONLY is false:
@@ -3170,6 +3338,8 @@ tasks:
       Add a "mark_in_progress" operation block to the Skill Delegation section, after create_issues and before generate_companion:
 
       mark_in_progress (write-enabled mode, called from Task Agent before implementation):
+
+
 
 
 
@@ -3234,3 +3404,8 @@ tasks:
       - 63
       - 64
     description: Update skills/orchestrating-agents/SKILL.md to reference CODE_REVIEW.md, add review monitoring to authority matrix, workflow section, and startup greeting.
+  - id: 66
+    name: yaml-yq-standardization
+    status: done
+    depends_on: []
+    description: Standardize all project config files on YAML + yq. Convert settings.json and .dispatch.example.json to YAML, update scripts/config.sh to use yq, update documentation.

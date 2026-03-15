@@ -1,22 +1,22 @@
 ---
 name: config
-description: "Document the full .dispatch.json configuration schema and help the user configure the plugin. Invoke with /config."
+description: "Document the full .dispatch.yaml configuration schema and help the user configure the plugin. Invoke with /config."
 ---
 
 # Dispatch Configuration
 
 ## Modes
 
-- **View mode** (default, or pass "show"): Print the full configuration reference, then annotate the current `.dispatch.json` against the schema.
-- **Setup mode** (pass "setup"): Walk through creating or updating `.dispatch.json` interactively.
+- **View mode** (default, or pass "show"): Print the full configuration reference, then annotate the current `.dispatch.yaml` against the schema.
+- **Setup mode** (pass "setup"): Walk through creating or updating `.dispatch.yaml` interactively.
 
 ---
 
 ## View Mode
 
-Print the schema reference below. Then check whether `.dispatch.json` exists in the current working directory:
+Print the schema reference below. Then check whether `.dispatch.yaml` exists in the current working directory:
 
-- If it exists: read it with `jq` and display each key's current value. For keys not present in the file, show the default value and mark it as `(default)`.
+- If it exists: read it with `yq` and display each key's current value. For keys not present in the file, show the default value and mark it as `(default)`.
 - If it does not exist: note that no project config is found and all values are using plugin defaults.
 
 ---
@@ -201,9 +201,9 @@ How long (in minutes) watch scripts and liveness checks poll before timing out a
 
 ## Setup Mode
 
-Walk the user through creating or updating `.dispatch.json`, then ensure `.claude/settings.json` is configured:
+Walk the user through creating or updating `.dispatch.yaml`, then ensure `.claude/settings.json` is configured:
 
-1. Check if `.dispatch.json` already exists. If so, warn and confirm before overwriting.
+1. Check if `.dispatch.yaml` already exists. If so, warn and confirm before overwriting.
 2. For each required field (`plan_storage.repo_path`), prompt for a value. Show the default and instruct the user to type it if they want to accept it — do not say "press Enter", as Claude Code requires non-empty input.
 3. For optional fields, ask whether the user wants to configure them (yes/no). Skip if they decline. Optional fields to prompt for (in addition to those above):
    - `issue_tracking.tool` — "Do you want to connect an issue tracker? (yes/no)"
@@ -215,7 +215,7 @@ Walk the user through creating or updating `.dispatch.json`, then ensure `.claud
      - If yes, also prompt for `verification.startup_command` — "Enter a startup command to run in the verification window, or leave blank for an idle shell:"
    - `verification.skill` — "Do you want to configure a delegate skill for automated pre-PR verification? (yes/no)"
      - If yes, prompt for the skill name.
-4. Write the resulting JSON to `.dispatch.json` in the current working directory.
+4. Write the resulting YAML to `.dispatch.yaml` in the current working directory.
 5. Confirm the file was written and show a summary of the values set.
 6. Determine the Dispatch plugin installation path:
    - Check `~/.claude/plugins/installed_plugins.json` for an entry named `"dispatch"` and read its path.

@@ -5,8 +5,8 @@
 #
 # Resolution priority (highest to lowest):
 #   1. epic.config.* in the loaded plan YAML (applied by caller via apply_epic_config)
-#   2. .agent-workflow.json defaults.* (per-project)
-#   3. settings.json defaults.* (plugin fallback)
+#   2. .dispatch.yaml defaults.* (per-project)
+#   3. settings.yaml defaults.* (plugin fallback)
 
 set -euo pipefail
 
@@ -15,13 +15,13 @@ _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _PLUGIN_ROOT="${_SCRIPT_DIR}"
 
 # Per-project config (gitignored, optional)
-_PROJECT_CONFIG="${PWD}/.dispatch.json"
+_PROJECT_CONFIG="${PWD}/.dispatch.yaml"
 
 # Plugin defaults (committed)
-_SETTINGS="${_PLUGIN_ROOT}/settings.json"
+_SETTINGS="${_PLUGIN_ROOT}/settings.yaml"
 
-# Helper: read a value from .agent-workflow.json, fall back to settings.json defaults.*
-# Usage: _cfg <jq-path-in-project-config> <jq-path-in-settings-defaults> <fallback-literal>
+# Helper: read a value from .dispatch.yaml, fall back to settings.yaml defaults.*
+# Usage: _cfg <yq-path-in-project-config> <yq-path-in-settings-defaults> <fallback-literal>
 _cfg() {
   local project_path="$1"
   local settings_path="$2"
@@ -30,11 +30,11 @@ _cfg() {
   local value=""
 
   if [[ -f "${_PROJECT_CONFIG}" ]]; then
-    value="$(jq -r "${project_path} // empty" "${_PROJECT_CONFIG}" 2>/dev/null || true)"
+    value="$(yq e "${project_path} // \"\"" "${_PROJECT_CONFIG}" 2>/dev/null || true)"
   fi
 
   if [[ -z "${value}" ]] && [[ -f "${_SETTINGS}" ]]; then
-    value="$(jq -r "${settings_path} // empty" "${_SETTINGS}" 2>/dev/null || true)"
+    value="$(yq e "${settings_path} // \"\"" "${_SETTINGS}" 2>/dev/null || true)"
   fi
 
   if [[ -z "${value}" ]]; then
@@ -53,50 +53,50 @@ _expand_path() {
   printf '%s' "${path}"
 }
 
-# Helper: read a JSON array from config, outputs one value per line
+# Helper: read a YAML array from config, outputs one value per line
 _cfg_array() {
   local project_path="$1"
   local settings_path="$2"
-  local fallback_json="$3"
+  local fallback_items="$3"
 
-  local json_array=""
+  local items=""
 
   if [[ -f "${_PROJECT_CONFIG}" ]]; then
-    json_array="$(jq -r "${project_path} // empty | if type == \"array\" then .[] else empty end" "${_PROJECT_CONFIG}" 2>/dev/null || true)"
+    items="$(yq e "${project_path} // [] | .[]" "${_PROJECT_CONFIG}" 2>/dev/null || true)"
   fi
 
-  if [[ -z "${json_array}" ]] && [[ -f "${_SETTINGS}" ]]; then
-    json_array="$(jq -r "${settings_path} // empty | if type == \"array\" then .[] else empty end" "${_SETTINGS}" 2>/dev/null || true)"
+  if [[ -z "${items}" ]] && [[ -f "${_SETTINGS}" ]]; then
+    items="$(yq e "${settings_path} // [] | .[]" "${_SETTINGS}" 2>/dev/null || true)"
   fi
 
-  if [[ -z "${json_array}" ]]; then
-    json_array="$(printf '%s' "${fallback_json}" | jq -r '.[]' 2>/dev/null || true)"
+  if [[ -z "${items}" ]]; then
+    items="${fallback_items}"
   fi
 
-  printf '%s' "${json_array}"
+  printf '%s' "${items}"
 }
 
 # --- Export configuration variables ---
 
 export PLAN_REPO
-PLAN_REPO="$(_expand_path "$(_cfg '.plan_storage.repo_path' '.defaults.plan_storage_repo_path // empty' '~/plans')")"
+PLAN_REPO="$(_expand_path "$(_cfg '.plan_storage.repo_path' '.defaults.plan_storage_repo_path // ""' '~/plans')")"
 
 # PROTECTED_BRANCHES as a bash array
-_protected_raw="$(_cfg_array '.git.protected_branches' '.defaults.protected_branches' '["main","master"]')"
+_protected_raw="$(_cfg_array '.git.protected_branches' '.defaults.protected_branches' $'main\nmaster')"
 export PROTECTED_BRANCHES
 IFS=$'\n' read -r -d '' -a PROTECTED_BRANCHES <<< "${_protected_raw}" || true
 
 export ISSUE_TRACKING_TOOL
-ISSUE_TRACKING_TOOL="$(_cfg '.issue_tracking.tool' '.defaults.issue_tracking_tool // empty' '')"
+ISSUE_TRACKING_TOOL="$(_cfg '.issue_tracking.tool' '.defaults.issue_tracking_tool // ""' '')"
 
 export ISSUE_TRACKING_READ_ONLY
-ISSUE_TRACKING_READ_ONLY="$(_cfg '.issue_tracking.read_only' '.defaults.issue_tracking_read_only // empty' 'false')"
+ISSUE_TRACKING_READ_ONLY="$(_cfg '.issue_tracking.read_only' '.defaults.issue_tracking_read_only // ""' 'false')"
 
 export ISSUE_TRACKING_SKILL
 ISSUE_TRACKING_SKILL="$(_cfg '.issue_tracking.skill' '.defaults.issue_tracking_skill' '')"
 
 # ALLOWED_DOMAINS as a bash array
-_domains_raw="$(_cfg_array '.sandbox.network.allowed_domains' '.defaults.allowed_domains' '["github.com","api.github.com","registry.npmjs.org"]')"
+_domains_raw="$(_cfg_array '.sandbox.network.allowed_domains' '.defaults.allowed_domains' $'github.com\napi.github.com\nregistry.npmjs.org')"
 export ALLOWED_DOMAINS
 IFS=$'\n' read -r -d '' -a ALLOWED_DOMAINS <<< "${_domains_raw}" || true
 

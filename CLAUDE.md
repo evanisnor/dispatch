@@ -12,6 +12,14 @@ The repository contains an implementation plan (`plan.yaml`). Most implementatio
 
 No build system exists yet. Once implemented, this plugin consists of shell scripts, markdown skill files, and JSON config — no compilation step. Tests (if any) will be defined during implementation.
 
+## Config Format: YAML + yq
+
+All project config files use YAML format (not JSON). Use `yq` for all config reads and script queries against project-owned files.
+
+- Never add new JSON config files to this project.
+- Never add `jq` invocations for reading project config — use `yq e '...' file.yaml` instead.
+- Exception: `gh` CLI output and GitHub API queries remain in JSON/jq — GitHub returns JSON only. `--jq` flags on `gh` commands are correct and should not be changed.
+
 ## Architecture
 
 ### Three-Agent System
@@ -38,10 +46,10 @@ No build system exists yet. Once implemented, this plugin consists of shell scri
 dispatch/
 ├── .claude-plugin/
 │   └── plugin.json               # Plugin manifest
-├── settings.json                 # Plugin defaults & Orchestrating Agent activation
-├── .dispatch.example.json        # Committed per-project config template
+├── settings.yaml                 # Plugin defaults & Orchestrating Agent activation
+├── .dispatch.example.yaml        # Committed per-project config template
 ├── scripts/                      # Shared scripts (sourced by all agents)
-│   ├── config.sh                 # Config loader — merges settings.json + .dispatch.json
+│   ├── config.sh                 # Config loader — merges settings.yaml + .dispatch.yaml
 │   ├── load-plan.sh              # Fetch plan YAML from plan storage repo
 │   ├── save-plan.sh              # Persist plan YAML with git-based mutex lock
 │   └── watch-merge-queue.sh      # Poll merge queue status
@@ -64,11 +72,11 @@ dispatch/
 
 ### Configuration (Two-Layer)
 
-**`settings.json`** (plugin root, committed) — activates Orchestrating Agent as default, provides fallback values under `defaults.*`.
+**`settings.yaml`** (plugin root, committed) — activates Orchestrating Agent as default, provides fallback values under `defaults.*`.
 
-**`.dispatch.json`** (project root, gitignored) — per-project overrides: `plan_storage.repo_path`, `git.protected_branches`, `issue_tracking.*`, `sandbox.*`.
+**`.dispatch.yaml`** (project root, gitignored) — per-project overrides: `plan_storage.repo_path`, `git.protected_branches`, `issue_tracking.*`, `sandbox.*`.
 
-**Resolution priority:** `epic.config.*` (per-epic in plan YAML) → `.dispatch.json defaults.*` → `settings.json defaults.*`
+**Resolution priority:** `epic.config.*` (per-epic in plan YAML) → `.dispatch.yaml defaults.*` → `settings.yaml defaults.*`
 
 ### Security Constraints
 
@@ -93,4 +101,4 @@ When implementing tasks from `plan.yaml`:
 
 ## Runtime Dependencies
 
-`git`, `gh` (GitHub CLI), `tmux`, `jq`, Claude Agent SDK, a dedicated plan-storage git repo, and optionally an MCP server for your issue tracker of choice.
+`git`, `gh` (GitHub CLI), `tmux`, `jq` (for GitHub API queries via `gh --jq`), `yq` (for project config files), Claude Agent SDK, a dedicated plan-storage git repo, and optionally an MCP server for your issue tracker of choice.
