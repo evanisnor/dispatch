@@ -160,7 +160,7 @@ Permission mode for Task Agents. `"bypassPermissions"` lets the agent act freely
 Walk the user through creating or updating `.agent-workflow.json`:
 
 1. Check if `.agent-workflow.json` already exists. If so, warn and confirm before overwriting.
-2. For each required field (`plan_storage.repo_path`, `worktree.base_dir`), prompt for a value and show the default.
-3. For optional fields, ask whether the user wants to configure them. Skip if they decline.
+2. For each required field (`plan_storage.repo_path`, `worktree.base_dir`), prompt for a value. Show the default and instruct the user to type it if they want to accept it — do not say "press Enter", as Claude Code requires non-empty input.
+3. For optional fields, ask whether the user wants to configure them (yes/no). Skip if they decline.
 4. Write the resulting JSON to `.agent-workflow.json` in the current working directory.
 5. Confirm the file was written and show a summary of the values set.
