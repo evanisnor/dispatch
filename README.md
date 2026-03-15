@@ -12,56 +12,7 @@ Dispatch is a Claude Code plugin that structures this new dynamic. You describe 
 
 ## Orchestration Flow
 
-```mermaid
-graph TD
-    subgraph you ["👤 You"]
-        uc_assign(["Assign work"])
-        uc_approve_plan(["Approve plan"])
-        uc_approve_diff(["Approve diff"])
-        uc_approve_review(["Approve incoming PR"])
-        uc_status(["Check agent status"])
-    end
-
-    subgraph oa ["🤖 Orchestrating Agent"]
-        uc_spawn_pa(["Spawn Planning Agent"])
-        uc_spawn_ta(["Spawn Task Agents"])
-        uc_spawn_ra(["Spawn Review Agent"])
-        uc_present(["Present diff for review"])
-        uc_present_review(["Present review context + diff"])
-        uc_monitor(["Monitor PRs and CI"])
-        uc_show_status(["Report agent status"])
-    end
-
-    subgraph pa ["🤖 Planning Agent"]
-        uc_plan(["Decompose work into tasks"])
-    end
-
-    subgraph ta ["🤖 Task Agents"]
-        uc_implement(["Implement task"])
-        uc_pr(["Open and shepherd PR"])
-    end
-
-    subgraph ra ["🤖 Review Agents"]
-        uc_analyze(["Analyze incoming PR"])
-    end
-
-    github[("GitHub")]
-
-    uc_assign --> uc_spawn_pa
-    uc_spawn_pa --> uc_plan
-    uc_approve_plan --> uc_spawn_ta
-    uc_spawn_ta --> uc_implement
-    uc_implement --> uc_present
-    uc_approve_diff --> uc_pr
-    uc_pr --> github
-    github --> uc_monitor
-    github --> uc_spawn_ra
-    uc_spawn_ra --> uc_analyze
-    uc_analyze --> uc_present_review
-    uc_present_review --> uc_approve_review
-    uc_approve_review --> github
-    uc_status --> uc_show_status
-```
+![Orchestration diagram](docs/orchestration.png)
 
 ## Requirements
 

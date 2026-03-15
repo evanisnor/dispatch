@@ -1,0 +1,47 @@
+@startuml orchestration
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+skinparam usecaseBorderColor #666666
+skinparam usecaseBackgroundColor #F5F5F5
+skinparam usecaseFontSize 12
+skinparam actorFontSize 12
+skinparam packageBorderColor #BBBBBB
+skinparam packageBackgroundColor #FAFAFA
+skinparam packageFontSize 13
+skinparam packageFontStyle bold
+skinparam arrowColor #555555
+skinparam arrowFontSize 11
+
+top to bottom direction
+
+actor "You" as human
+actor "Orchestrating Agent" as oa
+
+rectangle "Planning" as planning_box {
+  actor "Planning Agent" as pa
+}
+
+rectangle "Outgoing Work" as outgoing_box {
+  actor "Task Agents" as ta
+}
+
+rectangle "Incoming Reviews" as review_box {
+  actor "Review Agents" as ra
+}
+
+database "GitHub" as gh
+
+human --> oa : assign work,\napprove plan & diff
+oa --> human : present plan,\ndiff & review context
+pa --> oa : dependency tree
+ta --> gh : open & shepherd PR
+gh --> oa : CI results,\nreview decisions,\nreview requests
+ra --> oa : review context
+human --> gh : approve PR
+
+oa -down-> pa : spawn
+oa -down-> ta : spawn
+oa -down-> ra : spawn
+
+@enduml
