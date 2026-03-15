@@ -3,6 +3,10 @@ name: help
 description: "List available agent-workflow commands and usage examples. Invoke with /help."
 ---
 
+Print the following help reference exactly as written, formatted as markdown. Do not summarise, paraphrase, or add commentary.
+
+---
+
 # agent-workflow Help
 
 ## Slash Commands
