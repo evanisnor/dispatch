@@ -118,7 +118,7 @@ The Planning Agent will read the document and decompose it into tasks. You can a
 **Reference a Jira epic**
 
 ```
-Implement epic PROJ-42. Jira is configured in .agent-workflow.json.
+Create an implementation plan for epic PROJ-42.
 ```
 
 The Planning Agent reads the epic and its child issues via the Jira MCP server, builds a plan keyed to the real ticket IDs, and keeps them in sync as work progresses.
