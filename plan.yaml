@@ -1108,6 +1108,42 @@ tasks:
       Also update README.md Installation section to mention that users on macOS can run
       `brew bundle` from the repo root to install all dependencies at once.
 
+  - id: 31
+    name: branch-prefix-support
+    status: pending
+    depends_on: [3, 4, 29]
+    description: >
+      Add a configurable branch prefix so teams can enforce naming conventions
+      (e.g. "feat/", "users/evan/") on all task branches.
+
+      Changes required:
+        scripts/config.sh:
+          Export BRANCH_PREFIX using _cfg '.git.branch_prefix' '.defaults.branch_prefix' ''.
+          Place it after the PROTECTED_BRANCHES block.
+
+        settings.json:
+          Add "branch_prefix": "" to the defaults object.
+
+        .agent-workflow.example.json:
+          Add "branch_prefix": "" to the git object alongside protected_branches.
+
+        skills/planning-tasks/PLANNING.md:
+          Add a Branch Naming section after Slug ID Generation:
+            Branch names are constructed as {branch_prefix}{task-slug} where
+            branch_prefix is provided in the spawn input. If empty, the branch
+            name equals the task slug. Assign this name to both
+            spawn_input.branch and branch on the task.
+
+        skills/orchestrating-agents/SKILL.md:
+          In the Planning Phase spawn prompt description, instruct the Orchestrating
+          Agent to read BRANCH_PREFIX from config.sh and include it in the Planning
+          Agent prompt as branch_prefix: "<value>".
+
+        skills/config/SKILL.md:
+          Document git.branch_prefix in the Full Configuration Reference section.
+          Type: string, Default: "". Note that it must end with "/" for
+          directory-style prefixes (e.g. "feat/", "users/evan/").
+
   - id: 18
     name: executing-conflict-md
     status: done
