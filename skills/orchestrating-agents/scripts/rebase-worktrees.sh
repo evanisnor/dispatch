@@ -13,8 +13,9 @@ source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
 # Determine the main worktree path (first entry in git worktree list)
 MAIN_WORKTREE="$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')"
 
-# Fetch latest origin/main
+# Fetch latest origin/main and fast-forward the local main branch
 git fetch origin main --quiet
+git -C "${MAIN_WORKTREE}" merge --ff-only origin/main --quiet
 
 FAILED_WORKTREES=()
 
