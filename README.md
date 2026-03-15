@@ -1,8 +1,10 @@
 # Dispatch
 
-Dispatch is a Claude Code plugin that runs a multi-agent software development workflow directly from your terminal. You describe a piece of work, and a coordinated team of AI agents handles the rest: decomposing the work into atomic tasks, implementing each one in an isolated git worktree, opening pull requests, watching CI, responding to reviewer feedback, and merging — while keeping you in the loop at every decision point that matters.
+AI agents are changing what it means to be in the loop. Work that used to take hours of focused effort now happens in parallel, across multiple agents, faster than any single person could track. That's powerful — but without a clear process for when and how a human stays involved, it can quickly become overwhelming.
 
-- **Orchestrating Agent** coordinates the whole process. It spawns the other agents, opens tmux windows for diff review, monitors PRs and CI, and handles post-merge cleanup. It never writes code.
+Dispatch is a Claude Code plugin that structures this new dynamic. You describe a piece of work. A coordinated team of agents decomposes it, implements each piece in isolation, and shepherds the results through review and merge — pausing at the decisions that only you should make, and handling everything else autonomously.
+
+- **Orchestrating Agent** coordinates the whole process. It spawns the other agents, surfaces decisions for your review, monitors PRs and CI, and handles post-merge cleanup. It never writes code.
 - **Planning Agent** breaks down your assignment into atomic tasks with a dependency tree, optionally syncs with Jira, and saves a structured plan to a dedicated git repository. It exits once you approve the plan.
 - **Task Agents** each implement a single task in their own git worktree, shepherd the PR from draft through to merge, fix CI failures autonomously, and resolve merge conflicts when they arise.
 - **You** approve plans, review diffs, and handle anything the agents escalate — no more, no less.
@@ -104,7 +106,7 @@ In a Claude Code session, invoke the skill:
 
 The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options.
 
-### 📋 Give it an assignment
+### 📋 Describe the work
 
 **Plain language**
 
@@ -127,19 +129,19 @@ Create an implementation plan for epic PROJ-42.
 
 In all cases, the Orchestrating Agent will ask for your approval before spawning a Planning Agent.
 
-### 🗺️ Review and approve the plan
+### 🗺️ Shape the work before any code is written
 
-The Planning Agent decomposes the work and presents a dependency tree. You review it through the Orchestrating Agent, request changes if needed, and approve when satisfied. The plan is saved to your plan storage repo.
+The Planning Agent decomposes the work into atomic tasks and presents a dependency tree. You review it through the Orchestrating Agent, request changes if needed, and approve when satisfied. Nothing is implemented until you sign off — this is where you catch scope problems, wrong assumptions, or missing pieces before they become pull requests.
 
-### 🔍 Review diffs before PRs open
+### 🔍 See every diff before a PR opens
 
 For each task, once a Task Agent has implemented the work and passed its pre-PR checklist, the Orchestrating Agent opens a tmux window showing `git diff <base>...HEAD`. You approve or reject with specific feedback. No PR opens without your sign-off.
 
 You can also configure an optional **verification gate** that runs after diff approval and before the PR opens. When enabled, the Orchestrating Agent opens a tmux window pointed at the task's worktree so you can start the app, exercise the feature, and confirm it behaves correctly — before the PR is visible to reviewers. For projects with automated verification, you can instead delegate to a skill that runs integration tests or deploys to a staging environment and reports back. Both options can be combined, and either can be omitted entirely.
 
-### 🚀 Monitor and merge
+### 🚀 Let the agents handle the noise
 
-After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the PR ready when CI passes, and adds it to the merge queue. You are notified of CI failures that exceed the retry limit, reviewer change requests, and merge queue issues. Everything else is handled automatically.
+After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the PR ready when CI passes, and adds it to the merge queue. CI retries, merge conflict resolution, and reviewer reply threading all happen without your involvement. You are only pulled back in when something genuinely needs a decision: a CI failure that exceeded the retry limit, a reviewer requesting changes, or a merge conflict that requires your guidance.
 
 **When a reviewer requests changes**, the loop works like this:
 
