@@ -158,13 +158,17 @@ Walk the user through creating or updating `.dispatch.json`, then ensure `.claud
    - If not found there, check whether `~/.claude/plugins/dispatch/` exists.
    - If still not found, ask the user: "Where is the Dispatch plugin installed? (e.g. ~/.claude/plugins/dispatch)"
    - Expand tildes to absolute paths.
-7. Create or update `.claude/settings.json` to pre-authorize tools. Merge with any existing content — do not overwrite keys not related to Dispatch. The required permissions block is:
+7. Determine the plan storage repo path:
+   - Use the value provided for `plan_storage.repo_path` in step 2 (or its default `~/plans`).
+   - Expand tildes to absolute paths.
+8. Create or update `.claude/settings.json` to pre-authorize tools. Merge with any existing content — do not overwrite keys not related to Dispatch. The required permissions block is:
 
 ```json
 {
   "permissions": {
     "allow": [
       "Read(<plugin-path>/**)",
+      "Read(<plan-storage-path>/**)",
       "Read(**)",
       "Write(**)",
       "Edit(**)",
@@ -177,8 +181,9 @@ Walk the user through creating or updating `.dispatch.json`, then ensure `.claud
 }
 ```
 
-Where `<plugin-path>` is the absolute path determined in step 6 (e.g. `Read(/home/user/.claude/plugins/dispatch/**)`).
+Where `<plugin-path>` is the absolute path from step 6 and `<plan-storage-path>` is the absolute path from step 7 (e.g. `Read(/home/user/.claude/plugins/dispatch/**)`, `Read(/home/user/plans/**)`).
 
 Explain to the user:
 - The `Read(<plugin-path>/...)` entry allows the Orchestrating Agent to read Dispatch skill files without prompting. Without this, every skill file access will trigger an approval dialog.
+- The `Read(<plan-storage-path>/...)` entry allows agents to read plan YAML files from the plan storage repo without prompting.
 - The remaining permissions allow Task Agents spawned by the Orchestrating Agent to read and write files in their worktrees. Without this, Task Agents will be blocked from writing code.
