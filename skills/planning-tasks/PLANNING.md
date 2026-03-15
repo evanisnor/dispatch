@@ -55,7 +55,7 @@ If any check fails, fix the plan before presenting.
 
 ## Slug ID Generation
 
-When no Jira epic key is available, assign kebab-case slug IDs:
+When no issue tracking root ID is available (or issue tracking is not configured), assign kebab-case slug IDs:
 
 - **Epic slug** — derived from the epic title: `feature-user-auth`
 - **Task slug** — derived from the task title: `task-login-endpoint`
@@ -66,28 +66,30 @@ Rules:
 - Use only lowercase letters, digits, and hyphens. Strip special characters.
 - Keep slugs concise (3–5 words maximum).
 
-When Jira IDs are backfilled later (see `JIRA_SYNC.md`), the `id` fields are updated from slugs to real Jira keys. All `depends_on` references are updated in the same operation.
+When tracker IDs are backfilled later (see `ISSUE_TRACKING.md`), the `id` fields are updated from slugs to real tracker IDs. All `depends_on` references are updated in the same operation.
 
 ## Plan YAML Structure
 
-Always use the `epic:` wrapper — even when Jira is disabled and slug IDs are in use. The `epic:` object is the canonical root of every plan YAML. Never emit a flat plan with `tasks:` at the root.
+Always use the `epic:` wrapper — even when issue tracking is not configured and slug IDs are in use. The `epic:` object is the canonical root of every plan YAML. Never emit a flat plan with `tasks:` at the root.
 
 Full schema example:
 
 ```yaml
 epic:
-  id: feature-user-auth                     # Jira key or slug
+  id: feature-user-auth                     # Tracker ID or slug
   title: "Feature: User Authentication"
   status: planning                          # planning | active | complete
 
-  jira_sync:
-    status: pending                         # pending = slugs; linked = real Jira keys
-    epic_key: null
-    last_synced_at: null                    # ISO 8601 timestamp
-    companion_doc: null                     # path to companion doc in plan repo
+  issue_tracking:
+    tool: jira                              # mirrors issue_tracking.tool from config; null if not configured
+    read_only: false                        # mirrors issue_tracking.read_only from config
+    status: pending                         # pending = slugs in use; linked = real IDs set
+    root_id: null                           # Epic key, milestone ID, etc. (tool-specific)
+    last_synced_at: null                    # ISO 8601 timestamp of last sync
+    companion_doc: null                     # path to companion doc (only when read_only: true)
 
   source:
-    type: prompt                            # jira | prd | prompt
+    type: prompt                            # tracker | prd | prompt
     ref: null
     prd_url: null
     figma_designs: []

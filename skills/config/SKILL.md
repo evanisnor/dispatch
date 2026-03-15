@@ -45,14 +45,25 @@ Branches that Task Agents are sandbox-denied from pushing to directly.
 
 ---
 
-### `jira.enabled`
+### `issue_tracking.tool`
+
+| | |
+|---|---|
+| Type | `string` |
+| Default | `""` (disabled) |
+
+Name of the issue tracker to connect (`"jira"`, `"linear"`, `"github"`, etc.). Leave empty to disable issue tracking entirely. When set, Claude uses whatever MCP tools are available for the named tool (e.g. `jira_create_issue`, `linear_create_issue`).
+
+---
+
+### `issue_tracking.read_only`
 
 | | |
 |---|---|
 | Type | `boolean` |
 | Default | `false` |
 
-Enable Jira MCP integration. Requires a Jira MCP server configured in Claude Code settings.
+Controls how the Planning Agent interacts with the tracker. `false` = autonomous issue creation via MCP (write-enabled mode). `true` = generate a companion document for manual creation, then backfill real IDs after the human provides the root ID (read-only mode).
 
 ---
 
@@ -184,6 +195,9 @@ Walk the user through creating or updating `.dispatch.json`, then ensure `.claud
 1. Check if `.dispatch.json` already exists. If so, warn and confirm before overwriting.
 2. For each required field (`plan_storage.repo_path`), prompt for a value. Show the default and instruct the user to type it if they want to accept it — do not say "press Enter", as Claude Code requires non-empty input.
 3. For optional fields, ask whether the user wants to configure them (yes/no). Skip if they decline. Optional fields to prompt for (in addition to those above):
+   - `issue_tracking.tool` — "Do you want to connect an issue tracker? (yes/no)"
+     - If yes, prompt for the tool name — "Enter your issue tracker name (e.g. jira, linear, github):"
+     - Then prompt for `issue_tracking.read_only` — "Should the agent create issues autonomously, or generate a companion document for manual creation? (autonomous/manual)"
    - `verification.manual_gate` — "Do you want to enable a manual verification gate after diff review? (yes/no)"
      - If yes, also prompt for `verification.startup_command` — "Enter a startup command to run in the verification window, or leave blank for an idle shell:"
    - `verification.skill` — "Do you want to configure a delegate skill for automated pre-PR verification? (yes/no)"

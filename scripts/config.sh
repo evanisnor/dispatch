@@ -86,11 +86,11 @@ _protected_raw="$(_cfg_array '.git.protected_branches' '.defaults.protected_bran
 export PROTECTED_BRANCHES
 IFS=$'\n' read -r -d '' -a PROTECTED_BRANCHES <<< "${_protected_raw}" || true
 
-export JIRA_ENABLED
-JIRA_ENABLED="$(_cfg '.jira.enabled' '.defaults.jira_enabled // empty' 'true')"
+export ISSUE_TRACKING_TOOL
+ISSUE_TRACKING_TOOL="$(_cfg '.issue_tracking.tool' '.defaults.issue_tracking_tool // empty' '')"
 
-# JIRA_BASE_URL comes from the environment; not stored in config files
-export JIRA_BASE_URL="${JIRA_BASE_URL:-}"
+export ISSUE_TRACKING_READ_ONLY
+ISSUE_TRACKING_READ_ONLY="$(_cfg '.issue_tracking.read_only' '.defaults.issue_tracking_read_only // empty' 'false')"
 
 # ALLOWED_DOMAINS as a bash array
 _domains_raw="$(_cfg_array '.sandbox.network.allowed_domains' '.defaults.allowed_domains' '["github.com","api.github.com","registry.npmjs.org"]')"

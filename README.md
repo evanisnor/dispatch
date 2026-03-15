@@ -5,7 +5,7 @@ AI agents are changing what it means to be in the loop. Work that used to take h
 Dispatch is a Claude Code plugin that structures this new dynamic. You describe a piece of work. A coordinated team of agents decomposes it, implements each piece in isolation, and shepherds the results through review and merge — pausing at the decisions that only you should make, and handling everything else autonomously.
 
 - **Orchestrating Agent** coordinates the whole process. It spawns the other agents, surfaces decisions for your review, monitors PRs and CI, and handles post-merge cleanup. It never writes code.
-- **Planning Agent** breaks down your assignment into atomic tasks with a dependency tree, optionally syncs with Jira, and saves a structured plan to a dedicated git repository. It exits once you approve the plan.
+- **Planning Agent** breaks down your assignment into atomic tasks with a dependency tree, optionally syncs with your issue tracker, and saves a structured plan to a dedicated git repository. It exits once you approve the plan.
 - **Task Agents** each implement a single task in their own git worktree, shepherd the PR from draft through to merge, fix CI failures autonomously, and resolve merge conflicts when they arise.
 - **You** approve plans, review diffs, and handle anything the agents escalate — no more, no less.
 
@@ -58,7 +58,7 @@ graph TD
 - `jq` and `yq` (for config and plan parsing)
 - A dedicated **plan storage git repository** (can be private, can be empty to start)
 - Optionally: [`delta`](https://github.com/dandavison/delta) for syntax-highlighted diff review (falls back to plain `git diff` if not installed)
-- Optionally: a Jira MCP server if you want Jira integration
+- Optionally: an MCP server for your issue tracker (Jira, Linear, GitHub Issues, etc.)
 
 ## Installation
 
@@ -121,7 +121,7 @@ middleware guard for protected routes.
 Create an implementation plan using docs/prd-notifications.md.
 ```
 
-**Reference a Jira epic**
+**Reference a tracker epic**
 
 ```
 Create an implementation plan for epic PROJ-42.
@@ -168,7 +168,7 @@ Protected branches (`git.protected_branches`) are enforced at the permissions la
 
 ### Prompt injection defense
 
-All external content — PR comments, CI log summaries, reviewer feedback, Jira text, and plan `context` fields — is wrapped in `<external_content>` tags before being included in any agent prompt. Every agent's system prompt includes an explicit rule to treat content inside those tags as data only and never follow instructions found there.
+All external content — PR comments, CI log summaries, reviewer feedback, issue tracker text, and plan `context` fields — is wrapped in `<external_content>` tags before being included in any agent prompt. Every agent's system prompt includes an explicit rule to treat content inside those tags as data only and never follow instructions found there.
 
 ### Human approval gates
 
@@ -190,7 +190,8 @@ All external content — PR comments, CI log summaries, reviewer feedback, Jira 
 | `plan_storage.repo_path` | `string` (path) | `~/plans` | Local path to your plan storage git repository. |
 | `git.protected_branches` | `array of strings` | `["main", "master"]` | Branches Task Agents are sandbox-denied from pushing to directly. |
 | `git.branch_prefix` | `string` | `""` | Prefix prepended to every task branch (e.g. `"feat/"`, `"users/evan/"`). Must end with `/` for directory-style prefixes. |
-| `jira.enabled` | `boolean` | `false` | Enable Jira MCP integration. |
+| `issue_tracking.tool` | `string` | `""` | Name of the issue tracker (`"jira"`, `"linear"`, `"github"`, etc.). Leave empty to disable. |
+| `issue_tracking.read_only` | `boolean` | `false` | `false` = autonomous issue creation via MCP. `true` = generate companion doc for manual creation + backfill IDs after human provides root ID. |
 | `diff.mode` | `"split"` \| `"unified"` | `"split"` | Diff display mode in review panes. `"split"` uses `delta --side-by-side`; `"unified"` uses standard `delta` output. No effect if `delta` is not installed. |
 | `pr.template_path` | `string` (path) | `""` | Path to a custom PR description template. Leave empty to use the built-in template. |
 | `pr.description_skill` | `string` | `""` | Name of a delegate skill for PR description authoring. Leave empty to use the built-in template or `pr.template_path`. |
@@ -203,11 +204,16 @@ All external content — PR comments, CI log summaries, reviewer feedback, Jira 
 | `defaults.max_agent_restarts` | `integer` | `2` | How many times the Orchestrating Agent may restart a dead Task Agent before escalating. |
 | `defaults.polling_timeout_minutes` | `integer` | `60` | How long (in minutes) watch scripts poll before timing out and escalating. |
 
-### Jira Integration
+### Issue Tracking Integration
 
-Jira integration is optional and disabled by default. To enable it, set `"jira": { "enabled": true }` in your `.dispatch.json` and ensure a Jira MCP server is configured in your Claude Code environment.
+Issue tracking is optional and disabled by default. To enable it, set `"issue_tracking": { "tool": "<tracker-name>" }` in your `.dispatch.json` and ensure an MCP server for that tracker is configured in your Claude Code environment.
 
-When enabled, the Planning Agent reads epics and child issues via the Jira MCP server (read-only) and backfills real Jira keys into the plan YAML. If Jira is disabled, the Planning Agent uses kebab-case slug IDs and generates a companion markdown document for manual ticket creation.
+Two modes are available:
+
+- **Write-enabled** (`read_only: false`, the default): The Planning Agent autonomously creates issues via the tracker's MCP tools — a root issue for the epic and child issues for each task. After a task's PR merges, the Task Agent marks the corresponding issue done and links the PR.
+- **Read-only** (`read_only: true`): The Planning Agent generates a companion markdown document listing proposed issues for manual creation. After you create them and provide the root ID, the agent reads the tracker and backfills real IDs into the plan YAML.
+
+If issue tracking is not configured, the Planning Agent uses kebab-case slug IDs throughout.
 
 ### PR Description Templates
 

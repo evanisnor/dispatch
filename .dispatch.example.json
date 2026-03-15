@@ -7,8 +7,9 @@
     "protected_branches": ["main", "master"]
   },
 
-  "jira": {
-    "enabled": true
+  "issue_tracking": {
+    "tool": "jira",
+    "read_only": false
   },
 
   "sandbox": {
