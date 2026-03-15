@@ -15,7 +15,7 @@ fi
 source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
 
 FULL_PATH="${PLAN_REPO}/${PLAN_FILE}"
-LOCK_FILE="${PLAN_REPO}/plans/.lock"
+LOCK_FILE="${PLAN_REPO}/.lock"
 
 # Read updated YAML content from stdin before acquiring lock
 UPDATED_YAML="$(cat)"
