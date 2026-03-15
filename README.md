@@ -7,7 +7,8 @@ Dispatch is a Claude Code plugin that structures this new dynamic. You describe 
 - **Orchestrating Agent** coordinates the whole process. It spawns the other agents, surfaces decisions for your review, monitors PRs and CI, and handles post-merge cleanup. It never writes code.
 - **Planning Agent** breaks down your assignment into atomic tasks with a dependency tree, optionally syncs with your issue tracker, and saves a structured plan to a dedicated git repository. It exits once you approve the plan.
 - **Task Agents** each implement a single task in their own git worktree, shepherd the PR from draft through to merge, fix CI failures autonomously, and resolve merge conflicts when they arise.
-- **You** approve plans, review diffs, and handle anything the agents escalate — no more, no less.
+- **Review Agents** handle incoming GitHub review requests automatically. When you're added as a reviewer on a PR, a Review Agent performs a preliminary analysis — reading the diff, summarizing the changes, and surfacing open questions — so that when you sit down to review, the work is already done.
+- **You** approve plans, review diffs, handle anything the agents escalate — and approve incoming PRs when Review Agents have done the legwork.
 
 ## Orchestration Flow
 
@@ -17,6 +18,7 @@ graph TD
         uc_assign(["Assign work"])
         uc_approve_plan(["Approve plan"])
         uc_approve_diff(["Approve diff"])
+        uc_approve_review(["Approve incoming PR"])
         uc_status(["Check agent status"])
         uc_help(["Get help"])
     end
@@ -24,7 +26,9 @@ graph TD
     subgraph oa ["🤖 Orchestrating Agent"]
         uc_spawn_pa(["Spawn Planning Agent"])
         uc_spawn_ta(["Spawn Task Agents"])
+        uc_spawn_ra(["Spawn Review Agent"])
         uc_present(["Present diff for review"])
+        uc_present_review(["Present review context + diff"])
         uc_monitor(["Monitor PRs and CI"])
         uc_show_status(["Report agent status"])
         uc_show_help(["Show help reference"])
@@ -39,6 +43,10 @@ graph TD
         uc_pr(["Open and shepherd PR"])
     end
 
+    subgraph ra ["🤖 Review Agents"]
+        uc_analyze(["Analyze incoming PR"])
+    end
+
     uc_assign --> uc_spawn_pa
     uc_spawn_pa --> uc_plan
     uc_approve_plan --> uc_spawn_ta
@@ -46,6 +54,10 @@ graph TD
     uc_implement --> uc_present
     uc_approve_diff --> uc_pr
     uc_pr --> uc_monitor
+    uc_monitor --> uc_spawn_ra
+    uc_spawn_ra --> uc_analyze
+    uc_analyze --> uc_present_review
+    uc_approve_review --> uc_present_review
     uc_status --> uc_show_status
     uc_help --> uc_show_help
 ```
@@ -152,6 +164,35 @@ After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the
 5. The Orchestrating Agent opens a new tmux window for your confirmation before the push goes through.
 6. This repeats until the reviewer approves.
 
+### 👀 Review incoming pull requests
+
+When you're added as a reviewer on a GitHub pull request, the Orchestrating Agent detects it automatically and dispatches a Review Agent in the background. You'll see a notification immediately:
+
+> Review requested: [PR #42 — Add rate limiting to the API](url) by @teammate — Review Agent dispatched.
+
+The Review Agent reads the PR description and diff, then returns:
+
+- A brief summary of what the PR does and why
+- The author's original PR description, verbatim
+- A technical analysis of the diff — what changed, risk areas, anything worth scrutinizing
+- Open questions to consider before approving
+
+When you're ready to review, tell the Orchestrating Agent:
+
+```
+ready to review PR #42
+```
+
+It presents the review context in chat and opens a tmux window showing the full diff. You review, ask questions, and when satisfied:
+
+```
+approve
+```
+
+The Orchestrating Agent calls `gh pr review --approve` on your behalf. Comments are yours to make directly on GitHub — Dispatch doesn't generate or post them for you.
+
+Pending reviews appear in `/status` so you always know what's waiting for your attention.
+
 ## Permissions and Security
 
 ### What the agents can and cannot do
@@ -199,6 +240,7 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 | `verification.manual_gate` | `boolean` | `false` | When `true`, opens a tmux window at the task's worktree after diff approval and waits for human confirmation before the PR opens. |
 | `verification.startup_command` | `string` | `""` | Command to run automatically in the verification window (e.g. `"npm run dev"`). Only applies when `verification.manual_gate` is `true`. |
 | `verification.skill` | `string` | `""` | Name of a delegate skill for automated pre-PR verification. Spawned after diff approval; output is presented to the human before confirmation. Independent of `manual_gate`. |
+| `code_review_skill` | `string` | `""` | Name of a delegate skill for preliminary PR analysis. When set, Review Agents spawn this skill instead of performing their own analysis. Leave empty to use the built-in behavior. |
 | `sandbox.network.allowed_domains` | `array of strings` | `["github.com", "api.github.com", "registry.npmjs.org"]` | Domains Task Agents are permitted to reach over the network. |
 | `sandbox.filesystem.extra_deny_read` | `array of glob strings` | `[]` | Additional paths to block Task Agents from reading, merged with the hardcoded base deny list. |
 | `defaults.max_ci_fix_attempts` | `integer` | `3` | How many times a Task Agent may attempt to fix a CI failure before escalating. |
@@ -266,3 +308,15 @@ To hand off PR description authoring entirely to another Claude skill, set `pr.d
   }
 }
 ```
+
+### Code Review Skill
+
+By default, when a Review Agent analyzes an incoming PR it reads the diff itself and produces a summary, analysis, and list of open questions. If you have a Claude skill that knows your codebase's patterns, style expectations, or review standards, you can delegate preliminary analysis to it:
+
+```json
+{
+  "code_review_skill": "my-review-skill"
+}
+```
+
+The Review Agent spawns the skill with the PR URL, title, author, base and head refs, the full PR description, and the diff — all wrapped in `<external_content>` tags. The skill is expected to return the same structured output (summary, analysis, questions) that the built-in behavior produces.
