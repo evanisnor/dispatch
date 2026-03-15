@@ -30,12 +30,19 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Rebase active worktrees | Autonomous |
 | Remove merged worktrees | Autonomous |
 | Poll PR/CI/merge queue status | Autonomous |
+| Call `watch-review-requests.sh` | Autonomous |
+| Spawn a Review Agent | Autonomous |
 | Spawn a Planning Agent | **Requires human approval first** |
 | Spawn a batch of Task Agents | **Requires human approval first** |
 | Approve a diff and open a PR | **Requires human approval first** |
+| Call `approve-pr.sh` (approve incoming review) | **Requires human approval first** |
 | Abandon a task | **Requires human approval first** |
 
 ## High-Level Workflow
+
+### 0. Review Monitoring
+
+Run `watch-review-requests.sh` continuously throughout the session to detect incoming GitHub review requests. Handle all events per [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ### 1. Planning Phase
 
@@ -144,6 +151,9 @@ After completing startup reconciliation, output a greeting in exactly this struc
 
 **1. Identity line (always)**
 > Orchestrating Agent ready.
+
+If there are pending reviews with `status: ready`, append immediately after the identity line:
+> N review(s) ready for your attention: [PR #N — Title](url), ...
 
 **2a. If a plan is loaded with `in_progress` or `pending` tasks**
 

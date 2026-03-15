@@ -11,6 +11,7 @@
     "verification_manual_gate": false,
     "verification_startup_command": "",
     "verification_skill": "",
-    "issue_tracking_skill": ""
+    "issue_tracking_skill": "",
+    "code_review_skill": ""
   }
 }

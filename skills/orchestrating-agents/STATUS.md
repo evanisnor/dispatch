@@ -65,6 +65,38 @@ Derived by the Orchestrating Agent from plan state and live PR/CI context. Use t
 | `blocked on <task-id>` | Waiting for a dependency that is not yet done |
 | `failed — escalation required` | CI fix limit exceeded or unrecoverable error |
 
+## Pending Reviews Table
+
+Render this section **below the task table** when there are entries in the pending reviews list. If there are no pending reviews, omit the section entirely.
+
+```
+## Pending Reviews
+
+| PR | Title | Author | Status |
+|----|-------|--------|--------|
+| #N | Title | @author | status |
+```
+
+**Columns:**
+
+| Column | Source | Notes |
+|--------|--------|-------|
+| PR | `pr_number` — render as `#N` linked to `pr_url` | |
+| Title | `title` | Truncate to 30 chars if needed |
+| Author | `author` — render as `@author` | |
+| Status | `status` from pending reviews list | See values below |
+
+**Status values:**
+
+| Value | Meaning |
+|-------|---------|
+| `preliminary` | Review Agent running; analysis not yet ready |
+| `ready` | Analysis complete; awaiting human |
+| `reviewing` | Diff pane open; human is actively reviewing |
+| `approved` | Human approved; PR left for author to merge |
+
+---
+
 ## Rendering Rules
 
 1. **Row inclusion:**
