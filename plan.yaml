@@ -1898,3 +1898,38 @@ tasks:
       Issue Tracking Integration section: Add a third paragraph after the two existing mode paragraphs:
         "If you already have a Claude skill that knows your tracker's structure — epic hierarchies, status flows, description conventions — set issue_tracking.skill to delegate all tracker operations to it. Dispatch invokes the skill at the right moments (creating issues after planning, closing issues after merge) with structured context instead of using the built-in integration. This is the recommended approach when a tracker-specific skill is available."
         Include a JSON example: { "issue_tracking": { "tool": "jira", "skill": "jira-workflow" } }
+  - id: 57
+    name: task-agent-mark-in-progress
+    status: done
+    depends_on: []
+    description: >
+      Update skills/executing-tasks/SKILL.md to mark the task as in_progress in both the plan YAML and the issue tracker before starting implementation.
+
+      Add a new step 1 "Mark task in progress" before the current step 1 "Implement" (renumber existing steps 1–11 to 2–12):
+
+      Step 1: Mark task in progress
+        1a. Update the plan YAML: load the plan via load-plan.sh, patch the task's status to in_progress using yq, pipe to save-plan.sh. Use the same load → patch → save pattern documented in the Orchestrating Agent:
+            load-plan.sh <plan-path> | yq e '(.tasks[] | select(.id == "<task-id>")).status = "in_progress"' - | save-plan.sh <plan-path>
+        1b. If ISSUE_TRACKING_TOOL is set and ISSUE_TRACKING_READ_ONLY is false:
+            - If ISSUE_TRACKING_SKILL is set: spawn the named skill via Agent tool with:
+                operation: mark_in_progress
+                task_id: <real tracker ID from the plan>
+                task_title: <task title>
+            - If ISSUE_TRACKING_SKILL is empty: mark the issue in progress using your available tracker integration tools directly, per ISSUE_TRACKING.md.
+
+  - id: 58
+    name: issue-tracking-skill-mark-in-progress
+    status: done
+    depends_on: [57]
+    description: >
+      Update skills/planning-tasks/ISSUE_TRACKING.md to add mark_in_progress to the Skill Delegation section.
+
+      Add a "mark_in_progress" operation block to the Skill Delegation section, after create_issues and before generate_companion:
+
+      mark_in_progress (write-enabled mode, called from Task Agent before implementation):
+        Prompt the skill with:
+          operation: mark_in_progress
+          task_id: <real tracker ID from the plan>
+          task_title: <task title>
+        Expected return: plain confirmation string.
+        The Task Agent reports the outcome to the Orchestrating Agent.

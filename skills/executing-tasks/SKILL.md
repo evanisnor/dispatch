@@ -40,10 +40,28 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 
 ## PR Lifecycle
 
-1. **Implement** the task in your assigned worktree.
-2. **Complete pre-PR checklist** (see below).
-3. **Request diff approval** from the Primary Agent.
-4. **Open draft PR** once approval is received: generate the PR body, then pass it to `open-draft-pr.sh`. Prepare the following values before generating the body:
+1. **Mark task in progress** before starting any implementation work.
+
+   a. Update the plan YAML — use the load → patch → save pattern:
+      ```bash
+      load-plan.sh <plan-path> \
+        | yq e '(.tasks[] | select(.id == "<task-id>")).status = "in_progress"' - \
+        | save-plan.sh <plan-path>
+      ```
+
+   b. If `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
+      - If `ISSUE_TRACKING_SKILL` is set: spawn the named skill via the Agent tool with:
+        ```
+        operation: mark_in_progress
+        task_id: <real tracker ID from the plan>
+        task_title: <task title>
+        ```
+      - If `ISSUE_TRACKING_SKILL` is empty: mark the issue in progress using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
+
+2. **Implement** the task in your assigned worktree.
+3. **Complete pre-PR checklist** (see below).
+4. **Request diff approval** from the Primary Agent.
+5. **Open draft PR** once approval is received: generate the PR body, then pass it to `open-draft-pr.sh`. Prepare the following values before generating the body:
    - `TASK_ID` — task ID from the plan.
    - `TASK_TITLE` — task title from the plan.
    - `EPIC_TITLE` — epic title from the plan.
@@ -56,29 +74,29 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 
    Pass the resulting PR body to `open-draft-pr.sh`.
 
-5. **Probe the repo** by sourcing `probe-repo.sh`. This exports `MERGE_QUEUE_ENABLED` and `HAS_REQUIRED_CHECKS` for use in the steps below.
+6. **Probe the repo** by sourcing `probe-repo.sh`. This exports `MERGE_QUEUE_ENABLED` and `HAS_REQUIRED_CHECKS` for use in the steps below.
 
-6. **Watch CI** — behaviour depends on `HAS_REQUIRED_CHECKS`:
+7. **Watch CI** — behaviour depends on `HAS_REQUIRED_CHECKS`:
    - `true`: run `watch-ci.sh` and fix failures autonomously up to `max_ci_fix_attempts` (see [CI_FEEDBACK.md](CI_FEEDBACK.md)).
    - `false`: skip CI watching. No checks are required by the repo.
 
-7. **Mark PR ready**: call `mark-pr-ready.sh`.
+8. **Mark PR ready**: call `mark-pr-ready.sh`.
 
-8. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
+9. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
 
-9. **Merge or add to merge queue** — behaviour depends on `HAS_REQUIRED_REVIEWS` and `MERGE_QUEUE_ENABLED`:
+10. **Merge or add to merge queue** — behaviour depends on `HAS_REQUIRED_REVIEWS` and `MERGE_QUEUE_ENABLED`:
 
-   **When `HAS_REQUIRED_REVIEWS=true`:** A reviewer approval is human sign-off. Once the PR is approved, proceed autonomously:
-   - `MERGE_QUEUE_ENABLED=true`: call `add-to-merge-queue.sh`. Proceed to step 10.
-   - `MERGE_QUEUE_ENABLED=false`: call `gh pr merge --squash` (or `--merge` / `--rebase` per project convention).
+    **When `HAS_REQUIRED_REVIEWS=true`:** A reviewer approval is human sign-off. Once the PR is approved, proceed autonomously:
+    - `MERGE_QUEUE_ENABLED=true`: call `add-to-merge-queue.sh`. Proceed to step 11.
+    - `MERGE_QUEUE_ENABLED=false`: call `gh pr merge --squash` (or `--merge` / `--rebase` per project convention).
 
-   **When `HAS_REQUIRED_REVIEWS=false`:** No reviewer will have looked at it. Notify the Primary Agent and wait for the operator to confirm before taking any merge action:
-   - `MERGE_QUEUE_ENABLED=true`: once the operator confirms, call `add-to-merge-queue.sh`. Proceed to step 10.
-   - `MERGE_QUEUE_ENABLED=false`: the operator merges via the GitHub UI or instructs the agent to merge. Do not call any merge command until instructed. Notify the Primary Agent when the PR is merged so downstream tasks can be unblocked.
+    **When `HAS_REQUIRED_REVIEWS=false`:** No reviewer will have looked at it. Notify the Primary Agent and wait for the operator to confirm before taking any merge action:
+    - `MERGE_QUEUE_ENABLED=true`: once the operator confirms, call `add-to-merge-queue.sh`. Proceed to step 11.
+    - `MERGE_QUEUE_ENABLED=false`: the operator merges via the GitHub UI or instructs the agent to merge. Do not call any merge command until instructed. Notify the Primary Agent when the PR is merged so downstream tasks can be unblocked.
 
-10. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `watch-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
+11. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `watch-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
 
-11. **Close tracker issue** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
+12. **Close tracker issue** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
     - If `ISSUE_TRACKING_SKILL` is set (non-empty): spawn the named skill via the Agent tool with the following prompt:
       ```
       operation: close_issue

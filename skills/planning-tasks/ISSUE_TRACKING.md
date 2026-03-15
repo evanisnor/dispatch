@@ -43,6 +43,19 @@ On partial failure (some `task_ids` missing): leave failed tasks as slugs, repor
 
 ---
 
+**`mark_in_progress` (write-enabled mode, called from Task Agent before implementation)**
+
+Prompt the skill with:
+```
+operation: mark_in_progress
+task_id: <real tracker ID from the plan>
+task_title: <task title>
+```
+
+Expected return — a plain confirmation string (e.g. "Issue PROJ-42 marked in progress."). The Task Agent reports the outcome to the Orchestrating Agent.
+
+---
+
 **`generate_companion` (read-only mode, step 1)**
 
 Prompt the skill with:
