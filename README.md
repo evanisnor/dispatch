@@ -74,9 +74,7 @@ tmux new-session -s work
 claude --plugin-dir ~/.claude/plugins/agent-workflow
 ```
 
-**5. Configure your project**
-
-In your project directory, run the config skill to create `.agent-workflow.json` interactively:
+**5. Configure your project** — in your project directory, run the config skill to create `.agent-workflow.json` interactively:
 
 ```
 /agent-workflow:config setup
