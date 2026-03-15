@@ -1288,3 +1288,114 @@ tasks:
         Detect plugin installation path and add Read(<plugin-path>/**) to
         .claude/settings.json so agents are not repeatedly prompted for reads.
         Detect plan storage repo path and add Read(<plan-storage-path>/**) too.
+  - id: 36
+    name: verification-config
+    status: pending
+    depends_on: [35]
+    description: >
+      Add the verification.* configuration schema to all config surfaces.
+
+      settings.json:
+
+        Add verification defaults under defaults.*:
+          verification_manual_gate: false
+          verification_startup_command: ""
+          verification_skill: ""
+
+      .dispatch.example.json:
+
+        Add a verification block:
+          {
+            "verification": {
+              "manual_gate": false,
+              "startup_command": "",
+              "skill": ""
+            }
+          }
+
+      skills/config/SKILL.md:
+
+        Add three new entries to the Full Configuration Reference:
+          verification.manual_gate (boolean, default false):
+            When true, opens a tmux verification window at the worktree after
+            diff approval and waits for explicit human confirmation before the
+            PR opens.
+          verification.startup_command (string, default ""):
+            Shell command to run automatically in the verification tmux window
+            when manual_gate is true. Useful for booting a dev server
+            (e.g. "npm run dev"). Leave empty to open an idle shell.
+          verification.skill (string, default ""):
+            Name of a delegate skill to spawn for automated pre-PR verification.
+            The skill receives WORKTREE, BRANCH, and TASK_ID as context. Its
+            output is presented to the human before confirmation. Independent
+            of manual_gate.
+
+        Add entries to Setup Mode prompts for each new field (optional fields,
+        skip if user declines).
+
+      README.md:
+
+        Add three new rows to the Configuration schema table for the new keys.
+  - id: 37
+    name: verification-pane-scripts
+    status: pending
+    depends_on: [36]
+    description: >
+      Add open-verification-pane.sh and close-verification-pane.sh scripts to
+      skills/orchestrating-agents/scripts/.
+
+      open-verification-pane.sh:
+
+        Usage: open-verification-pane.sh <window-name> <worktree-path> [startup-command]
+
+        Opens a new tmux window named <window-name> with CWD set to <worktree-path>.
+        If a startup-command is provided, sends it to the window via tmux send-keys.
+        Prints the tmux window ID to stdout (for use by close-verification-pane.sh).
+        Exits 1 if not inside a tmux session.
+
+        Follow the same tmux targeting pattern as open-review-pane.sh.
+
+      close-verification-pane.sh:
+
+        Usage: close-verification-pane.sh <window-id>
+
+        Closes the named tmux window. No-op if the window does not exist.
+        Follow the same pattern as close-review-pane.sh.
+  - id: 38
+    name: verification-gate
+    status: pending
+    depends_on: [37]
+    description: >
+      Update the Orchestrating Agent's diff review flow to include the
+      verification gate after diff approval and before the PR opens.
+
+      skills/orchestrating-agents/REVIEW.md:
+
+        Add a new "Verification Gate" section after the Initial Diff Review Loop.
+
+        Flow:
+          1. After human approves the diff, check whether verification is configured:
+             - Read verification.skill from config.
+             - Read verification.manual_gate from config.
+          2. If verification.skill is set:
+             - Spawn the named skill via the Agent tool, passing:
+                 WORKTREE=<worktree-path>
+                 BRANCH=<branch>
+                 TASK_ID=<task-id>
+             - Present the skill's output to the human.
+          3. If verification.manual_gate is true:
+             - Call open-verification-pane.sh "verify-<task-id>" "<worktree-path>" [startup-command]
+             - Tell the human: "Verification window open — use the 'verify-<task-id>'
+               tmux window to test the build. Confirm here when ready."
+             - Await explicit human confirmation.
+             - Call close-verification-pane.sh <window-id>.
+          4. If neither is configured, skip the gate entirely.
+          5. Notify the Task Agent to open the PR.
+
+        Note: If both skill and manual_gate are set, skill runs first; manual gate follows.
+
+      skills/orchestrating-agents/SKILL.md:
+
+        Authority Matrix: add row for "Open verification tmux window" — Autonomous.
+        Hard Constraints: note that verification gate (if configured) must complete
+        before notifying Task Agent to open the PR.
