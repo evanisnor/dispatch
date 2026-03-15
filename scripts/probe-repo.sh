@@ -54,10 +54,44 @@ _has_required_checks() {
   fi
 }
 
+# Check for required PR reviews via:
+#   1. Classic branch protection (required_pull_request_reviews)
+#   2. Repository rulesets (pull_request rule type)
+# Returns "true" if at least one approving review is required before merge.
+_has_required_reviews() {
+  local classic
+  classic="$(
+    gh api "repos/${REPO}/branches/${DEFAULT_BRANCH}/protection" \
+      --jq '.required_pull_request_reviews.required_approving_review_count > 0' \
+      2>/dev/null || echo "false"
+  )"
+
+  if [[ "${classic}" == "true" ]]; then
+    echo "true"
+    return
+  fi
+
+  local ruleset_count=0
+  ruleset_count="$(
+    gh api "repos/${REPO}/rulesets" \
+      --jq '[.[] | .rules[]? | select(.type == "pull_request")] | length' \
+      2>/dev/null || echo "0"
+  )"
+
+  if [[ "${ruleset_count}" -gt 0 ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
 export MERGE_QUEUE_ENABLED
 MERGE_QUEUE_ENABLED="$(_has_merge_queue)"
 
 export HAS_REQUIRED_CHECKS
 HAS_REQUIRED_CHECKS="$(_has_required_checks)"
 
-echo "Repo probe: merge_queue=${MERGE_QUEUE_ENABLED} required_checks=${HAS_REQUIRED_CHECKS}"
+export HAS_REQUIRED_REVIEWS
+HAS_REQUIRED_REVIEWS="$(_has_required_reviews)"
+
+echo "Repo probe: merge_queue=${MERGE_QUEUE_ENABLED} required_checks=${HAS_REQUIRED_CHECKS} required_reviews=${HAS_REQUIRED_REVIEWS}"
