@@ -135,14 +135,6 @@ The Planning Agent decomposes the work and presents a dependency tree. You revie
 
 For each task, once a Task Agent has implemented the work and passed its pre-PR checklist, the Orchestrating Agent opens a tmux window showing `git diff <base>...HEAD`. You approve or reject with specific feedback. No PR opens without your sign-off.
 
-After you approve the diff, an optional **verification gate** runs before the PR opens. This is where you can do runtime testing — start the app, exercise the feature, confirm it behaves correctly — before the PR is visible to reviewers.
-
-Two independent options, configured in `.dispatch.json`:
-
-- **`verification.manual_gate`** (boolean) — opens a tmux window pointed at the task's worktree so you have a shell ready to work in. If `verification.startup_command` is set (e.g. `"npm run dev"`), it runs automatically in that window. You confirm in the main session when done.
-- **`verification.skill`** (string) — spawns a named delegate skill that receives the worktree path, branch, and task ID as context. Useful for automated integration tests, staging deploys, or any project-specific verification logic. Its output is shown to you before you confirm.
-
-Both can be enabled together: the skill runs first, then the manual gate opens. If neither is configured, the PR opens immediately after diff approval.
 
 ### 🚀 Monitor and merge
 
