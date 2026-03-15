@@ -49,8 +49,9 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 2. Request human approval to spawn that batch of Task Agents.
 3. For each approved task:
    a. Call `create-worktree.sh <repo-path> <task-id> <branch-name>`.
-   b. Call `spawn-agent.sh <task-id> <plan-path>` — outputs the agent ID.
-   c. Update `agent_id`, `worktree`, and `branch` in the plan via `save-plan.sh`.
+   b. Call `spawn-agent.sh <task-id> <plan-path>` to get the spawn prompt (stdout).
+   c. Use the Agent tool with `subagent_type: executing-tasks`, `run_in_background: true`, and the spawn prompt as the task description. The Agent tool returns an `agent_id`.
+   d. Update `agent_id`, `worktree`, and `branch` in the plan via `save-plan.sh`.
 4. Monitor each Task Agent as it implements and pushes its task.
 
 ### 3. Diff Review

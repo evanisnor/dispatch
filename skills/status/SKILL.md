@@ -63,6 +63,10 @@ Render the agent status table immediately using the rules below. Do not read any
 2. **Sort order:** `in_progress` → `blocked`/`failed` → `pending` (ready) → `done`.
 
 3. **No active plan:** if no plan is loaded, display exactly:
-   > No active plan. Give me an assignment to get started.
+   > No active plan. Here's what you can do:
+   > - **Plan** — invoke `/orchestrating-agents` and describe what you'd like to build
+   > - **Implement** — invoke `/orchestrating-agents` and point it at an existing plan file
+   > - **Config** — run `/config` to view or update your setup
+   > - **Help** — run `/help` for a full command reference
 
 4. **Single task:** if only one task is active, still render the table (do not switch to prose).
