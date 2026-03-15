@@ -1598,3 +1598,47 @@ tasks:
       the verification gate in high-level prose: what it does, the tmux window
       option for manual runtime testing, and the delegate skill option for
       automated verification.
+  - id: 40
+    name: plan-review-pane-script
+    status: in_progress
+    depends_on: []
+    description: >
+      Add open-plan-review-pane.sh to skills/orchestrating-agents/scripts/.
+
+      Usage: open-plan-review-pane.sh <window-name> <temp-plan-file> [original-plan-file] [mode]
+
+      New plan (no original-plan-file): display the temp file content with
+      bat --language yaml if available, otherwise plain cat.
+
+      Amendment (original-plan-file provided): show
+      git diff --no-index <original-plan-file> <temp-plan-file>
+      piped through delta if available (respecting mode), otherwise plain diff.
+
+      Appends a separator and "Press Enter to close" prompt in both cases.
+      Outputs the tmux window ID to stdout.
+      Validates: args non-empty, temp file exists, TMUX is set.
+      Closing reuses the existing close-review-pane.sh.
+  - id: 41
+    name: plan-review-flow
+    status: pending
+    depends_on: [40]
+    description: >
+      Update planning workflow so the plan is reviewed in tmux before being saved.
+
+      skills/orchestrating-agents/SKILL.md:
+        Authority Matrix: add "Open/close tmux plan review panes — Autonomous".
+        Planning Phase steps 5-6: PA writes to temp file, returns temp path; OA opens
+          review-plan-<slug> window via open-plan-review-pane.sh, awaits human approval,
+          closes pane on approval then tells PA to save; relays rejection and reopens pane.
+        Hard Constraints: add rule that OA must never instruct PA to save until the
+          human has approved the plan tmux review.
+
+      skills/planning-tasks/SKILL.md:
+        Revise workflow steps 5-8: PA writes YAML to /tmp/dispatch-plan-<slug>.yaml
+          and returns temp path; save-plan.sh is only called after OA signals approval;
+          if OA relays rejection, PA revises the temp file and returns updated path.
+
+      skills/orchestrating-agents/REVIEW.md:
+        Add "Plan Review Loop" section (new plans) and "Plan Amendment Review Loop"
+          section (mid-flight amendments) at the top of the file, using
+          open-plan-review-pane.sh and the existing close-review-pane.sh.
