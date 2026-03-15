@@ -30,6 +30,11 @@ _has_remote() {
   git -C "${PLAN_REPO}" remote get-url origin &>/dev/null
 }
 
+# Warn if operating without a remote — non-blocking, surfaces to Orchestrating Agent
+if ! _has_remote; then
+  echo "WARNING: plan storage has no remote — plans are saved locally only. Add a remote to enable sync and backup." >&2
+fi
+
 _acquire_lock() {
   local attempt="$1"
   local delay="$2"
