@@ -69,7 +69,7 @@ Agent has stopped or errored. Immediately escalate to the human with:
 - Last known activity timestamp.
 - Option to restart the agent (up to `MAX_AGENT_RESTARTS`) or abandon the task.
 
-On restart: call `spawn-agent.sh <task-id> <plan-path>` to get the spawn prompt, then use the Agent tool with `run_in_background: true` to re-spawn. Update `agent_id` in the plan via `save-plan.sh`.
+On restart: call `spawn-agent.sh <task-id> <plan-path>` to get the spawn prompt, then use the Agent tool with `isolation: "worktree"`, `run_in_background: true` to re-spawn. Update `agent_id` in the plan via `save-plan.sh`.
 On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
 
 ### Stalled (status: running, but no output for `POLLING_TIMEOUT_MINUTES`)
