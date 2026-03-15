@@ -9,7 +9,8 @@
 
   "issue_tracking": {
     "tool": "jira",
-    "read_only": false
+    "read_only": false,
+    "skill": ""
   },
 
   "sandbox": {

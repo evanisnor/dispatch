@@ -1822,3 +1822,79 @@ tasks:
       Security Constraints: "Jira text" → "issue tracker text".
       Directory structure: JIRA_SYNC.md → ISSUE_TRACKING.md.
       Three-Agent table: "syncs with Jira" → "syncs with configured issue tracker".
+  - id: 52
+    name: issue-tracking-skill-config
+    status: done
+    depends_on: []
+    description: >
+      Add ISSUE_TRACKING_SKILL to the config layer.
+
+      scripts/config.sh: Add export block after ISSUE_TRACKING_READ_ONLY:
+        export ISSUE_TRACKING_SKILL
+        ISSUE_TRACKING_SKILL="$(_cfg '.issue_tracking.skill' '.defaults.issue_tracking_skill' '')"
+
+      settings.json: Add "issue_tracking_skill": "" to the defaults block alongside verification_skill.
+
+      .dispatch.example.json: Add "skill": "" to the issue_tracking block alongside tool and read_only.
+  - id: 53
+    name: issue-tracking-skill-delegate-planning
+    status: done
+    depends_on: [52]
+    description: >
+      Update skills/planning-tasks/ISSUE_TRACKING.md to add skill delegation for Planning Agent operations.
+
+      Add a "Skill Delegation" section immediately after the Configuration Check section and before Write-Enabled Mode.
+      When ISSUE_TRACKING_SKILL is non-empty, the Planning Agent delegates all tracker operations to the named skill via the Agent tool instead of using built-in tracker integration.
+
+      Document three operations with their prompt format and expected return:
+
+      create_issues (write-enabled): prompt includes operation, epic_title, epic_description (wrapped in external_content), tasks list (id, title, description, depends_on). Returns JSON: { "root_id": "...", "task_ids": { "<slug>": "<tracker_id>", ... } }. After receiving: update plan IDs from slugs to real IDs, update depends_on references, set issue_tracking.status: linked, root_id, last_synced_at, persist via save-plan.sh. On partial failure: leave failed tasks as slugs, report to Primary Agent.
+
+      generate_companion (read-only step 1): prompt includes operation, epic_title, epic_description (external_content), tasks list, output_path ({plan-storage}/plans/{epic-slug}-tracker-items.md). Returns markdown text. After receiving: save to output_path, set issue_tracking.companion_doc, persist via save-plan.sh, notify Primary Agent with path.
+
+      backfill_ids (read-only step 2): prompt includes operation, root_id (human-provided), tasks list (id, title only). Returns JSON: { "root_id": "...", "task_ids": { "<slug>": "<tracker_id>", ... }, "unmatched": [] }. After receiving: apply ID substitution. If unmatched is non-empty: record in issue_tracking.unmatched, report to Primary Agent. If >20% unmatched: abort, escalate, do not persist.
+
+      When ISSUE_TRACKING_SKILL is empty, fall through to existing integration logic unchanged.
+
+      Also: Replace MCP-specific language in the existing fallback sections ("MCP tools") with "tracker integration" to avoid implying a specific integration mechanism.
+  - id: 54
+    name: issue-tracking-skill-delegate-task-agent
+    status: done
+    depends_on: [52]
+    description: >
+      Update skills/executing-tasks/SKILL.md to add step 11 for post-merge issue close with skill delegation.
+
+      Add step 11 after the merge queue monitoring step:
+      "Close tracker issue (if configured)"
+        - Guard: only runs if ISSUE_TRACKING_TOOL is set and ISSUE_TRACKING_READ_ONLY is false
+        - If ISSUE_TRACKING_SKILL is set: spawn the named skill via Agent tool with operation=close_issue, task_id (real tracker ID from plan), task_title, pr_url
+        - If ISSUE_TRACKING_SKILL is empty: close and link the issue using the tracker's own integration directly, per ISSUE_TRACKING.md
+        - Report outcome to Orchestrating Agent in both cases
+  - id: 55
+    name: issue-tracking-skill-config-doc
+    status: done
+    depends_on: [52]
+    description: >
+      Update skills/config/SKILL.md to document issue_tracking.skill.
+
+      View Mode: Add a new "### issue_tracking.skill" section after the issue_tracking.read_only section.
+        Type: string. Default: "" (uses built-in tracker integration).
+        Description: Name of a delegate skill for all tracker operations. When set, the Planning Agent and Task Agent spawn this skill via the Agent tool. The skill receives a structured prompt with the operation type (create_issues, generate_companion, backfill_ids, or close_issue) and relevant context, and returns structured output (JSON for ID operations, markdown for companion doc, confirmation text for close). Leave empty to use the built-in integration.
+
+      Setup Mode: After the read_only prompt ("autonomous/manual"), add:
+        "Do you have a Claude skill for your issue tracker? (yes/no)"
+        If yes, prompt: "Enter the skill name (e.g. jira-issues, linear-workflow):"
+        If no, leave issue_tracking.skill empty.
+  - id: 56
+    name: issue-tracking-skill-readme
+    status: done
+    depends_on: [53, 54, 55]
+    description: >
+      Update README.md to document issue_tracking.skill.
+
+      Config table: Add a new row after the issue_tracking.read_only row:
+        | issue_tracking.skill | string | "" | Name of a delegate skill for all tracker operations. When set, invoked instead of built-in integration. Leave empty to use the built-in approach. |
+
+      Issue Tracking Integration section: Add a third paragraph after the two existing mode paragraphs:
+        "If you already have a Claude skill that knows your tracker's structure — epic hierarchies, status flows, description conventions — set issue_tracking.skill to delegate all tracker operations to it. Dispatch invokes the skill at the right moments (creating issues after planning, closing issues after merge) with structured context instead of using the built-in integration. This is the recommended approach when a tracker-specific skill is available."
+        Include a JSON example: { "issue_tracking": { "tool": "jira", "skill": "jira-workflow" } }

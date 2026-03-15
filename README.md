@@ -191,7 +191,8 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 | `git.protected_branches` | `array of strings` | `["main", "master"]` | Branches Task Agents are sandbox-denied from pushing to directly. |
 | `git.branch_prefix` | `string` | `""` | Prefix prepended to every task branch (e.g. `"feat/"`, `"users/evan/"`). Must end with `/` for directory-style prefixes. |
 | `issue_tracking.tool` | `string` | `""` | Name of the issue tracker (`"jira"`, `"linear"`, `"github"`, etc.). Leave empty to disable. |
-| `issue_tracking.read_only` | `boolean` | `false` | `false` = autonomous issue creation via MCP. `true` = generate companion doc for manual creation + backfill IDs after human provides root ID. |
+| `issue_tracking.read_only` | `boolean` | `false` | `false` = autonomous issue creation (write-enabled). `true` = generate companion doc for manual creation + backfill IDs after human provides root ID. |
+| `issue_tracking.skill` | `string` | `""` | Name of a delegate skill for all tracker operations. When set, invoked instead of built-in integration. Leave empty to use the built-in approach. |
 | `diff.mode` | `"split"` \| `"unified"` | `"split"` | Diff display mode in review panes. `"split"` uses `delta --side-by-side`; `"unified"` uses standard `delta` output. No effect if `delta` is not installed. |
 | `pr.template_path` | `string` (path) | `""` | Path to a custom PR description template. Leave empty to use the built-in template. |
 | `pr.description_skill` | `string` | `""` | Name of a delegate skill for PR description authoring. Leave empty to use the built-in template or `pr.template_path`. |
@@ -210,8 +211,19 @@ Issue tracking is optional and disabled by default. To enable it, set `"issue_tr
 
 Two modes are available:
 
-- **Write-enabled** (`read_only: false`, the default): The Planning Agent autonomously creates issues via the tracker's MCP tools — a root issue for the epic and child issues for each task. After a task's PR merges, the Task Agent marks the corresponding issue done and links the PR.
-- **Read-only** (`read_only: true`): The Planning Agent generates a companion markdown document listing proposed issues for manual creation. After you create them and provide the root ID, the agent reads the tracker and backfills real IDs into the plan YAML.
+- **Write-enabled** (`read_only: false`, the default): The Planning Agent autonomously creates issues — a root issue for the epic and child issues for each task. After a task's PR merges, the Task Agent marks the corresponding issue done and links the PR.
+- **Read-only** (`read_only: true`): The Planning Agent generates a companion markdown document listing proposed issues for manual creation. After you create them and provide the root ID, the agent backfills real IDs into the plan YAML.
+
+If you already have a Claude skill that knows your tracker's structure — epic hierarchies, status flows, description conventions — set `issue_tracking.skill` to delegate all tracker operations to it. Dispatch invokes the skill at the right moments (creating issues after planning, closing issues after merge) with structured context instead of using the built-in integration. This is the recommended approach when a tracker-specific skill is available.
+
+```json
+{
+  "issue_tracking": {
+    "tool": "jira",
+    "skill": "jira-workflow"
+  }
+}
+```
 
 If issue tracking is not configured, the Planning Agent uses kebab-case slug IDs throughout.
 

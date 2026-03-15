@@ -10,6 +10,7 @@
     "pr_description_skill": "",
     "verification_manual_gate": false,
     "verification_startup_command": "",
-    "verification_skill": ""
+    "verification_skill": "",
+    "issue_tracking_skill": ""
   }
 }

@@ -63,7 +63,18 @@ Name of the issue tracker to connect (`"jira"`, `"linear"`, `"github"`, etc.). L
 | Type | `boolean` |
 | Default | `false` |
 
-Controls how the Planning Agent interacts with the tracker. `false` = autonomous issue creation via MCP (write-enabled mode). `true` = generate a companion document for manual creation, then backfill real IDs after the human provides the root ID (read-only mode).
+Controls how the Planning Agent interacts with the tracker. `false` = autonomous issue creation (write-enabled mode). `true` = generate a companion document for manual creation, then backfill real IDs after the human provides the root ID (read-only mode).
+
+---
+
+### `issue_tracking.skill`
+
+| | |
+|---|---|
+| Type | `string` |
+| Default | `""` (built-in tracker integration) |
+
+Name of a delegate skill for all tracker operations. When set, the Planning Agent and Task Agent spawn this skill via the Agent tool instead of using built-in integration. The skill receives a structured prompt with the operation type (`create_issues`, `generate_companion`, `backfill_ids`, or `close_issue`) and relevant context, and returns structured output (JSON for ID operations, markdown for companion doc generation, a confirmation string for close). Leave empty to use the built-in integration.
 
 ---
 
@@ -198,6 +209,8 @@ Walk the user through creating or updating `.dispatch.json`, then ensure `.claud
    - `issue_tracking.tool` — "Do you want to connect an issue tracker? (yes/no)"
      - If yes, prompt for the tool name — "Enter your issue tracker name (e.g. jira, linear, github):"
      - Then prompt for `issue_tracking.read_only` — "Should the agent create issues autonomously, or generate a companion document for manual creation? (autonomous/manual)"
+     - Then prompt for `issue_tracking.skill` — "Do you have a Claude skill for your issue tracker? (yes/no)"
+       - If yes, prompt for the skill name — "Enter the skill name (e.g. jira-issues, linear-workflow):"
    - `verification.manual_gate` — "Do you want to enable a manual verification gate after diff review? (yes/no)"
      - If yes, also prompt for `verification.startup_command` — "Enter a startup command to run in the verification window, or leave blank for an idle shell:"
    - `verification.skill` — "Do you want to configure a delegate skill for automated pre-PR verification? (yes/no)"

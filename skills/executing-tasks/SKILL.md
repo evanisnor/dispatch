@@ -78,6 +78,18 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 
 10. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `watch-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
 
+11. **Close tracker issue** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
+    - If `ISSUE_TRACKING_SKILL` is set (non-empty): spawn the named skill via the Agent tool with the following prompt:
+      ```
+      operation: close_issue
+      task_id: <real tracker ID from the plan>
+      task_title: <task title>
+      pr_url: <merged PR URL>
+      ```
+      The skill closes and links the issue in the tracker and returns a confirmation string.
+    - If `ISSUE_TRACKING_SKILL` is empty: close the issue and link the merged PR URL using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
+    - Report the outcome to the Primary Agent.
+
 ## Pre-PR Checklist
 
 Complete all of the following before requesting diff approval:
