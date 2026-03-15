@@ -1108,6 +1108,38 @@ tasks:
       Also update README.md Installation section to mention that users on macOS can run
       `brew bundle` from the repo root to install all dependencies at once.
 
+  - id: 34
+    name: dispatch-rebrand
+    status: pending
+    depends_on: []
+    description: >
+      Rebrand the project from "agent-workflow" to "Dispatch".
+
+      Changes required:
+        skills/dispatch/SKILL.md:
+          Already created as the /dispatch delegate entry point.
+
+        .agent-workflow.example.json → .dispatch.example.json:
+          Rename the example config file.
+
+        scripts/config.sh:
+          Update _PROJECT_CONFIG to look for .dispatch.json instead of .agent-workflow.json.
+
+        skills/config/SKILL.md:
+          Update all references from .agent-workflow.json to .dispatch.json.
+
+        .claude-plugin/plugin.json:
+          Update name field to "dispatch" if present.
+
+        settings.json:
+          Update any name/branding references.
+
+        SPEC.md, CLAUDE.md, README (if any):
+          Update project name references throughout.
+
+        Note: the GitHub repository rename (agent-workflow → dispatch) is a
+        separate manual step outside the scope of this task.
+
   - id: 33
     name: load-plan-archive-plan-scripts
     status: done
