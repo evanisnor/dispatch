@@ -20,7 +20,7 @@ fi
 source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
 
 # Apply per-epic config overrides
-apply_epic_config "${PLAN_PATH}"
+apply_epic_config "${PLAN_PATH}" || true
 
 # Extract task details from plan YAML
 TASK_YAML="$(yq e ".epic.tasks[] | select(.id == \"${TASK_ID}\")" "${PLAN_PATH}" 2>/dev/null)"
