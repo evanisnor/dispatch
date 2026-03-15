@@ -135,6 +135,7 @@ The Planning Agent decomposes the work and presents a dependency tree. You revie
 
 For each task, once a Task Agent has implemented the work and passed its pre-PR checklist, the Orchestrating Agent opens a tmux window showing `git diff <base>...HEAD`. You approve or reject with specific feedback. No PR opens without your sign-off.
 
+You can also configure an optional **verification gate** that runs after diff approval and before the PR opens. When enabled, the Orchestrating Agent opens a tmux window pointed at the task's worktree so you can start the app, exercise the feature, and confirm it behaves correctly — before the PR is visible to reviewers. For projects with automated verification, you can instead delegate to a skill that runs integration tests or deploys to a staging environment and reports back. Both options can be combined, and either can be omitted entirely.
 
 ### 🚀 Monitor and merge
 

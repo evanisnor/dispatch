@@ -1589,3 +1589,12 @@ tasks:
         Authority Matrix: add row for "Open verification tmux window" — Autonomous.
         Hard Constraints: note that verification gate (if configured) must complete
         before notifying Task Agent to open the PR.
+  - id: 39
+    name: verification-gate-readme
+    status: done
+    depends_on: [38]
+    description: >
+      Expand the "Review diffs before PRs open" section in README.md to describe
+      the verification gate in high-level prose: what it does, the tmux window
+      option for manual runtime testing, and the delegate skill option for
+      automated verification.
