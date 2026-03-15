@@ -70,6 +70,8 @@ When Jira IDs are backfilled later (see `JIRA_SYNC.md`), the `id` fields are upd
 
 ## Plan YAML Structure
 
+Always use the `epic:` wrapper — even when Jira is disabled and slug IDs are in use. The `epic:` object is the canonical root of every plan YAML. Never emit a flat plan with `tasks:` at the root.
+
 Full schema example:
 
 ```yaml
