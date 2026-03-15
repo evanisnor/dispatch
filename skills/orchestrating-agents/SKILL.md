@@ -38,7 +38,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 
 1. Human assigns work.
 2. Request human approval to spawn a Planning Agent.
-3. Use the Agent tool with `subagent_type: planning-tasks` and a prompt containing the plan storage path and assignment (wrap assignment text in `<external_content>` tags).
+3. Use the Agent tool with `subagent_type: general-purpose`. Read `skills/planning-tasks/SKILL.md` from the plugin directory and prepend it to the prompt, followed by the plan storage path and assignment (wrap assignment text in `<external_content>` tags).
 4. Relay the Planning Agent's dependency tree to the human for review.
 5. Iterate with the Planning Agent until the human approves.
 6. Planning Agent saves the finalized plan to plan storage and returns the plan path.
@@ -48,7 +48,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 1. Identify all tasks in the plan with `status: pending` and no unmet `depends_on`.
 2. Request human approval to spawn that batch of Task Agents.
 3. For each approved task, read the task fields from the plan YAML, then:
-   a. Use the Agent tool with `subagent_type: executing-tasks`, `isolation: "worktree"`, `run_in_background: true`, and a prompt containing: task ID, plan path, branch name, and epic context + task description wrapped in `<external_content>` tags. The Agent tool creates the worktree, scopes write access, and returns an `agent_id`. If changes are made, the worktree path and branch are also returned.
+   a. Use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`. Read `skills/executing-tasks/SKILL.md` from the plugin directory and prepend it to the prompt, followed by: task ID, plan path, branch name, and epic context + task description wrapped in `<external_content>` tags. The Agent tool creates the worktree, scopes write access, and returns an `agent_id`. If changes are made, the worktree path and branch are also returned.
    b. Update `agent_id`, `worktree`, and `branch` in the plan via `save-plan.sh`.
 4. Monitor each Task Agent as it implements and pushes its task.
 
