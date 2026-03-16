@@ -35,7 +35,7 @@ You do **not** write code or spawn other agents. When the plan is approved, save
 2. Decompose the assignment into atomic tasks following the rules in [PLANNING.md](PLANNING.md).
 3. Build the dependency tree and construct the plan YAML.
 4. Run the plan quality validation checklist (see PLANNING.md).
-5. Write the plan YAML to a temp file at `/tmp/dispatch-plan-<slug>.yaml`. Return the temp path to the Primary Agent — do **not** call `save-plan.sh` yet.
+5. Write the plan YAML to a temp file at `/tmp/dispatch-plan-<slug>.yaml`. Return the temp path to the Primary Agent — do **not** persist to plan storage yet.
 6. Await a signal from the Primary Agent:
    - If the Primary Agent relays rejection feedback: revise the plan in the temp file and return the updated temp path.
    - If the Primary Agent signals approval: proceed to step 7.
@@ -56,7 +56,7 @@ When spawned with an existing plan path and an amendment request (rather than a 
 1. Read the current plan YAML directly from the plan storage path.
 2. Propose only the requested change — do not re-plan the entire project.
 3. Validate the modified dependency graph: check that all `depends_on` entries reference valid task IDs and that no cycles are introduced.
-4. Write the amended YAML to a temp file at `/tmp/dispatch-plan-<slug>-amendment.yaml`. Return the temp path to the Primary Agent along with the original plan path — do **not** call `save-plan.sh` yet.
+4. Write the amended YAML to a temp file at `/tmp/dispatch-plan-<slug>-amendment.yaml`. Return the temp path to the Primary Agent along with the original plan path — do **not** persist to plan storage yet.
 5. The Primary Agent opens a tmux diff pane showing `git diff --no-index <original> <temp>`. Await the approval signal.
 6. If rejected: revise the temp file and return the updated temp path.
 7. If approved: persist via the write-with-lock pattern in [PLAN_STORAGE.md](PLAN_STORAGE.md) and return the final plan path.

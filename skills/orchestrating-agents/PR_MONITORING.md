@@ -23,7 +23,7 @@ Per-epic overrides in `epic.config.*` take precedence over these defaults.
 
 ## PR and CI Monitoring
 
-1. After a Task Agent opens a PR, record the PR URL in the plan via `save-plan.sh`.
+1. After a Task Agent opens a PR, record the PR URL in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 2. Call `watch-pr-status.sh <pr-url>`.
 3. On **CI failure** (exit 2): notify the Task Agent to begin the CI fix loop (see `executing-tasks/CI_FEEDBACK.md`). Track the attempt count against `MAX_CI_FIX_ATTEMPTS`. On breach, escalate to human.
 4. On **changes requested** (exit 1): begin the reviewer-requested change review loop in [REVIEW.md](REVIEW.md).
@@ -35,7 +35,7 @@ Per-epic overrides in `epic.config.*` take precedence over these defaults.
 Once a Task Agent calls `add-to-merge-queue.sh`, call `watch-merge-queue.sh <pr-url>` and handle each outcome:
 
 ### Success (exit 0)
-1. Update task `status: done` and `result.merged_at` in the plan via `save-plan.sh`.
+1. Update task `status: done` and `result.merged_at` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 2. Call `remove-worktree.sh <worktree-path>`.
 3. Call `rebase-worktrees.sh` to rebase all remaining active worktrees.
 4. For any worktree with a rebase conflict, notify the relevant Task Agent (see REVIEW.md — merge conflict review loop).
@@ -69,7 +69,7 @@ Agent has stopped or errored. Immediately escalate to the human with:
 - Last known activity timestamp.
 - Option to restart the agent (up to `MAX_AGENT_RESTARTS`) or abandon the task.
 
-On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt (SKILL.md + task fields) from the plan YAML. Update `agent_id` in the plan via `save-plan.sh`.
+On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt (SKILL.md + task fields) from the plan YAML. Update `agent_id` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
 
 ### Stalled (status: running, but no output for `POLLING_TIMEOUT_MINUTES`)

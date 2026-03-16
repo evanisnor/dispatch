@@ -18,7 +18,7 @@
 # Outputs the tmux window ID on success.
 #
 # The plan is NOT saved by this script. Saving only happens after human approval,
-# via save-plan.sh called by the Planning Agent on the Orchestrating Agent's signal.
+# via the Planning Agent following the write-with-lock pattern in PLAN_STORAGE.md.
 
 set -euo pipefail
 

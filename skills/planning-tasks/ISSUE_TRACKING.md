@@ -145,7 +145,7 @@ Structure:
 | ... | ... | ... | — or prerequisite summary |
 ```
 
-After saving, set `issue_tracking.companion_doc` in the plan and persist via `save-plan.sh`. Notify Primary Agent with the companion doc path.
+After saving, set `issue_tracking.companion_doc` in the plan. Apply `yq e -i` patches for each updated field, following the write-with-lock pattern in [PLAN_STORAGE.md](PLAN_STORAGE.md). Notify Primary Agent with the companion doc path.
 
 ### Step 2: ID Backfill (after human provides root ID)
 
