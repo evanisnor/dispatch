@@ -14,30 +14,6 @@ A Claude Code plugin that coordinates a team of AI agents through your developme
 - Prototype mode — explore before committing to the full plan, no PRs opened
 - Knowledge store — learns from past sessions, reapplies lessons in future runs
 
-## How It Works
-
-<img width=400 src="docs/orchestration.png" alt="Orchestration diagram">
-
-| Agent | Role |
-|---|---|
-| **Orchestrating Agent** | Coordinates everything — spawns agents, surfaces decisions, monitors PRs and CI. Never writes code. |
-| **Planning Agent** | Decomposes work into atomic tasks with a dependency tree. Exits after you approve the plan. |
-| **Task Agents** | One per task. Implements in an isolated worktree, shepherds the PR from draft through merge. |
-| **Review Agents** | Analyzes incoming review requests — reads the diff, summarizes changes, surfaces questions — so the work is done before you sit down. |
-
-### Human approval gates
-
-- **Spawning a Planning Agent** — before any work is decomposed
-- **Approving the plan** — before anything is saved
-- **Spawning Task Agents** — before any code is written
-- **Spawning a Prototype Agent** — before any exploratory implementation begins
-- **Stacking a dependent Task Agent** — offered after each approved diff; one at a time, opt-in
-- **Diff review** — before every PR is opened
-- **Reviewer-requested changes** — before the Task Agent acts on them
-- **CI failures beyond the retry limit** — escalated with a summary of what failed
-- **Merge conflicts** — surfaced for guidance before any conflicting changes are pushed
-- **Abandoning a task** — requires explicit confirmation
-
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) (CLI)
@@ -93,6 +69,30 @@ In a Claude Code session, invoke the skill:
 The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options. Describe the work in plain language, point to a PRD or design document, or reference a tracker epic — the agent will ask for your approval before spawning a Planning Agent.
 
 From there, the workflow runs automatically: plan approval, parallel task implementation, diff review before each PR opens, CI monitoring, and merge queue management. You're pulled in only at the gates listed above.
+
+## How It Works
+
+<img width=400 src="docs/orchestration.png" alt="Orchestration diagram">
+
+| Agent | Role |
+|---|---|
+| **Orchestrating Agent** | Coordinates everything — spawns agents, surfaces decisions, monitors PRs and CI. Never writes code. |
+| **Planning Agent** | Decomposes work into atomic tasks with a dependency tree. Exits after you approve the plan. |
+| **Task Agents** | One per task. Implements in an isolated worktree, shepherds the PR from draft through merge. |
+| **Review Agents** | Analyzes incoming review requests — reads the diff, summarizes changes, surfaces questions — so the work is done before you sit down. |
+
+### Human approval gates
+
+- **Spawning a Planning Agent** — before any work is decomposed
+- **Approving the plan** — before anything is saved
+- **Spawning Task Agents** — before any code is written
+- **Spawning a Prototype Agent** — before any exploratory implementation begins
+- **Stacking a dependent Task Agent** — offered after each approved diff; one at a time, opt-in
+- **Diff review** — before every PR is opened
+- **Reviewer-requested changes** — before the Task Agent acts on them
+- **CI failures beyond the retry limit** — escalated with a summary of what failed
+- **Merge conflicts** — surfaced for guidance before any conflicting changes are pushed
+- **Abandoning a task** — requires explicit confirmation
 
 ## Configuration
 
