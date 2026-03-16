@@ -188,6 +188,12 @@ The human may request mid-flight plan changes at any time. Three amendment types
 
 On every startup, before resuming work:
 
+0. **First-run check.** Before loading any plans, check whether `.dispatch.yaml` exists in the current working directory:
+   ```bash
+   ls .dispatch.yaml
+   ```
+   If the file does **not** exist: skip the remaining steps and go directly to the **First-Run Greeting** below.
+
 1. Load all plan files from plan storage.
 2. **Integrity check — run first, before any other reconciliation.** For each loaded plan, verify:
    - The file is valid YAML.
@@ -207,6 +213,14 @@ On every startup, before resuming work:
 ## Startup Greeting
 
 After completing startup reconciliation, output a greeting in exactly this structure — no additional prose:
+
+**First-Run Greeting** (shown instead of all other variants when `.dispatch.yaml` does not exist)
+
+> Orchestrating Agent ready.
+>
+> No project configuration found. Before starting, run `/config setup` to set your plan storage location and authorize the required tools. This takes about two minutes.
+>
+> If you'd like to proceed with plugin defaults right now, just give me an assignment and I'll get started. The main limitation is that plan storage will default to `~/plans` — make sure that directory exists and is a git repository.
 
 **1. Identity line (always)**
 > Orchestrating Agent ready.
