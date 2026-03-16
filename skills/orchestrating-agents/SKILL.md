@@ -192,7 +192,7 @@ On every startup, before resuming work:
    ```bash
    ls .dispatch.yaml
    ```
-   If the file does **not** exist: skip the remaining steps and go directly to the **First-Run Greeting** below.
+   If the file does **not** exist: skip the remaining steps and go directly to **Scenario A: First-Run** in the Startup Greeting below.
 
 1. Load all plan files from plan storage.
 2. **Integrity check — run first, before any other reconciliation.** For each loaded plan, verify:
@@ -218,9 +218,11 @@ On every startup, before resuming work:
 
 ## Startup Greeting
 
-After completing startup reconciliation, output a greeting in exactly this structure — no additional prose:
+After completing startup reconciliation, output a concierge greeting — a fast orientation with counts and an actionable recommendation. Do **not** render the full status table (that is for `/status`). The greeting follows one of four mutually exclusive scenarios below.
 
-**First-Run Greeting** (shown instead of all other variants when `.dispatch.yaml` does not exist)
+### Scenario A: First-Run (no `.dispatch.yaml`)
+
+Shown instead of all other scenarios when `.dispatch.yaml` does not exist.
 
 > Orchestrating Agent ready.
 >
@@ -228,28 +230,87 @@ After completing startup reconciliation, output a greeting in exactly this struc
 >
 > If you'd like to proceed with plugin defaults right now, just give me an assignment and I'll get started. The main limitation is that plan storage will default to `~/plans` — make sure that directory exists and is a git repository.
 
-**1. Identity line (always)**
+If untracked worktrees are detected (see Untracked Worktree Detection below), append:
+
+> Also: N worktree(s) not tracked by any plan exist in this repo. Dispatch only manages worktrees it creates.
+
+### Scenario B: Active Plan (`in_progress` or `pending` tasks exist)
+
 > Orchestrating Agent ready.
 
-If there are pending reviews with `status: ready`, append immediately after the identity line:
-> N review(s) ready for your attention: [PR #N — Title](url), ...
+Then the bullet summary (each line omitted if its count is zero, rendered in this fixed order):
 
-**2a. If a plan is loaded with `in_progress` or `pending` tasks**
+> - **Worktrees:** N worktree(s) active, M with stopped agents
+> - **PRs:** K PR(s) open (J awaiting review, L in merge queue)
+> - **Queued:** P task(s) queued (Q ready to start)
+> - **Reviews:** R review(s) ready for your attention
 
-Render the status table (per [STATUS.md](STATUS.md)), then:
-> Resuming work. Let me know if you'd like to make any changes.
+Then exactly one recommendation (see Recommendation Priority Table below).
 
-**2b. If a plan is loaded but all tasks are `done`, `cancelled`, or `failed`**
+Then the untracked worktree note if applicable (see Untracked Worktree Detection below).
 
-> All tasks in the current plan are complete. Give me a new assignment or run `/config` to review your setup.
+### Scenario C: Completed Plan (all tasks `done`, `cancelled`, or `failed`)
 
-**2c. If no plan is loaded**
+> Orchestrating Agent ready.
 
+If any tasks have `status: failed`, prepend this warning before the completion summary:
+
+> ⚠ One or more tasks did not complete successfully. Run `/status` for details.
+
+Then the completion summary:
+
+> All N task(s) complete (D done, C cancelled, F failed).
+
+Omit any category with a zero count (e.g. if no failures: `All 5 task(s) complete (5 done).`).
+
+Then:
+
+> Ready for a new assignment.
+
+### Scenario D: No Plan Loaded
+
+> Orchestrating Agent ready.
+>
 > No active plan. Here's what you can do:
 > - **Plan** — describe what you'd like to build and I'll decompose it into tasks
 > - **Implement** — point me at an existing plan file to start executing
 >
 > Also available: `/status`, `/config`, `/help`
+
+If untracked worktrees are detected, append the untracked worktree note (see below).
+
+### Recommendation Priority Table
+
+In Scenario B, select exactly one recommendation — the first matching condition wins:
+
+| Priority | Condition | Recommendation |
+|---|---|---|
+| 1 | Pending reviews with `status: ready` | List them with PR links, ask if human wants to open the first one |
+| 2 | Stopped agents, no PR (activity: `interrupted`) | "Some agents were interrupted. Run `/status` for details, or I can restart or clean up those worktrees." |
+| 3 | Stopped agents, open PR (activity: `unattended`) | "Some agents stopped with open PRs. I can restart those agents to resume monitoring." |
+| 4 | Tasks ready to start (queued with all `depends_on` done) | "N task(s) ready to start. Want me to spawn the next batch?" |
+| 5 | All agents running, remaining tasks blocked | "All agents running. Waiting on in-progress tasks to unblock the next batch." |
+
+### Bullet Construction Rules
+
+Derive counts from reconciliation results and the loaded plan:
+
+- **Worktrees:** Count tasks with `worktree` set in the plan. N = total worktrees. M = worktrees where Agent is `stopped` (per STATUS.md Agent Values).
+- **PRs:** Count tasks with `pr_url` set and PR state is open. K = total open PRs. J = PRs with activity `awaiting review`. L = PRs with activity `in merge queue`.
+- **Queued:** Count tasks with `status: pending` and no `worktree` set. P = total queued. Q = those with all `depends_on` done (i.e. `ready` per STATUS.md Queued section).
+- **Reviews:** Count entries in the pending reviews list with `status: ready`. R = that count.
+
+### Untracked Worktree Detection
+
+Run `git worktree list --porcelain` and collect all worktree paths. Subtract the main worktree (first entry) and all paths referenced by any plan task's `worktree` field. If any remain:
+
+> Also: N worktree(s) not tracked by any plan exist in this repo.
+
+This note appears last in every scenario where it is applicable (A, B, D). In Scenario C it is omitted (completed plans have no active worktrees to track).
+
+### Determinism Rule
+
+Same reconciliation state produces same output. Do not add commentary, paraphrase, or rearrange the structure.
 
 ## Status Display
 
