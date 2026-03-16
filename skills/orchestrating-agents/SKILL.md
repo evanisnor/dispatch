@@ -38,6 +38,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Call `approve-pr.sh` (approve incoming review) | **Requires human approval first** |
 | Abandon a task | **Requires human approval first** |
 | Spawn a stacked Task Agent + initial rebase | **Requires human approval first** |
+| Spawn a Prototype Agent | **Requires human approval first** |
 
 ## High-Level Workflow
 
@@ -56,6 +57,46 @@ Run `watch-review-requests.sh` continuously throughout the session to detect inc
    - On approval: close the pane, tell the Planning Agent to save. Planning Agent persists via the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) and returns the final plan path.
    - On rejection: close the pane, relay feedback to the Planning Agent. When the Planning Agent returns an updated temp path, reopen the pane.
 7. Store the final plan path returned by the Planning Agent.
+
+### 1.5 Prototype Mode Selection
+
+After storing the final plan path, before spawning any Task Agents:
+
+1. Ask the human:
+   > "Plan saved. How would you like to proceed?
+   > - **Implement** — spawn Task Agents in parallel, one worktree per task, a PR opened for each.
+   > - **Prototype** — dispatch a single agent to explore one or more tasks in one worktree.
+   >   No PRs are opened. Good for de-risking unfamiliar domains before committing to the full plan."
+
+2. On "implement": proceed to Phase 2 immediately.
+
+3. On "prototype": ask which tasks to include (one ID, comma-separated list, or "all").
+   Resolve "all" to the full pending task ID list. Request human approval.
+
+4. On approval: run `spawn-prototype-agent.sh <plan-path> <task-ids-csv> <branch-name>`,
+   capture stdout, pass as Agent tool prompt with `subagent_type: general-purpose`,
+   `isolation: "worktree"`, `run_in_background: false`.
+
+5. When the Prototype Agent signals that commits are complete and it is awaiting verification:
+   - If verification is configured (VERIFICATION_PROMPT or VERIFICATION_MANUAL_GATE=true):
+     Run the Verification Gate from REVIEW.md § "Verification Gate", using the prototype
+     worktree path in place of the task worktree. Relay the outcome to the Prototype Agent.
+   - If verification is not configured: relay "no verification configured" to unblock it.
+
+6. When the Prototype Agent returns its findings summary, present it to the human in full,
+   then ask:
+   > "Prototype complete. What next?
+   > - **Proceed** — move into normal implementation (Phase 2) with the current plan.
+   > - **Re-plan** — spawn a Planning Agent in amendment mode with prototype findings as context.
+   > - **Discard** — clean up the prototype worktree and branch, then end the session.
+   > - **Stop** — keep the worktree/branch as-is and end the session."
+
+7. On "proceed": continue to Phase 2 (Execution Phase).
+8. On "re-plan": spawn a Planning Agent in amendment mode; wrap findings in `<external_content>`
+   tags when composing the Planning Agent prompt. Follow REVIEW.md plan review loop for amended plan.
+9. On "discard": run `remove-worktree.sh <worktree-path>` to clean up the local worktree.
+   Then announce readiness and await new assignment.
+10. On "stop": announce readiness and await new assignment (worktree and branch are retained).
 
 ### 2. Execution Phase (per batch of ready tasks)
 

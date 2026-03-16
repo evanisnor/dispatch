@@ -4,6 +4,9 @@ knowledge:
   repo_path: ""
   max_load_entries: 30
 
+prototype:
+  auto_push: false
+
 defaults:
   main_update_strategy: rebase
   max_ci_fix_attempts: 3
