@@ -101,6 +101,8 @@ The Planning Agent decomposes the work into atomic tasks and presents a dependen
 
 For each task, once a Task Agent has implemented the work and passed its pre-PR checklist, the Orchestrating Agent opens a tmux window showing `git diff <base>...HEAD`. You approve or reject with specific feedback. No PR opens without your sign-off.
 
+If `editor.app` is configured, you can also respond with `open editor` during any diff review to open the worktree directly in your IDE — the diff window stays open alongside it.
+
 You can also configure an optional **verification gate** that runs after diff approval and before the PR opens. When enabled, the Orchestrating Agent opens a tmux window pointed at the task's worktree so you can start the app, exercise the feature, and confirm it behaves correctly — before the PR is visible to reviewers. For projects with automated verification, you can instead delegate to a skill that runs integration tests or deploys to a staging environment and reports back. Both options can be combined, and either can be omitted entirely.
 
 ### ⚡ Stack dependent tasks during review
@@ -199,6 +201,7 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 | `issue_tracking.read_only` | `boolean` | `false` | `false` = autonomous issue creation (write-enabled). `true` = generate companion doc for manual creation + backfill IDs after human provides root ID. |
 | `issue_tracking.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for all tracker operations. When set, a general-purpose sub-agent is spawned with this prompt instead of built-in integration. Leave empty to use the built-in approach. |
 | `diff.mode` | `"split"` \| `"unified"` | `"split"` | Diff display mode in review panes. `"split"` uses `delta --side-by-side`; `"unified"` uses standard `delta` output. No effect if `delta` is not installed. |
+| `editor.app` | `string` | `""` | Editor or IDE to open when reviewing a diff. On macOS, use the app's display name (e.g. `"Cursor"`, `"Xcode"`, `"Visual Studio Code"`). On any platform, a CLI command works too (e.g. `"code"`, `"cursor"`). When set, a `open editor` option is offered during every diff review. Leave empty to disable. |
 | `pr.template_path` | `string` (path) | `""` | Path to a custom PR description template. Leave empty to use the built-in template. |
 | `pr.description_prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for PR description authoring. When set, a general-purpose sub-agent is spawned with this prompt instead of calling `pr-description.sh`. Leave empty to use the built-in template or `pr.template_path`. |
 | `verification.manual_gate` | `boolean` | `false` | When `true`, opens a tmux window at the task's worktree after diff approval and waits for human confirmation before the PR opens. |
