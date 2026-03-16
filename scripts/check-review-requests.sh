@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# check-review-requests.sh — single-shot check for incoming PR review requests
+#
+# Emits state-change events only:
+#   NEW_REVIEW_REQUEST <pr-url> <pr-number> <title> <author>
+#   REVIEW_REMOVED <pr-url> <pr-number>
+#
+# State is persisted in /tmp/dispatch-review-state.yaml (yq required).
+#
+# Exit codes:
+#   0 = check completed (events in stdout)
+#   1 = API error
+
+set -euo pipefail
+
+source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+
+STATE_FILE="/tmp/dispatch-review-state.yaml"
+
+# Initialize state file if absent
+if [[ ! -f "${STATE_FILE}" ]]; then
+  printf 'reviews: []\n' > "${STATE_FILE}"
+fi
+
+# Fetch PRs where the current user is a requested reviewer
+# Only extract fields needed — never pass full API payload to agent context
+RAW="$(gh pr list --review-requested @me \
+  --json number,title,url,author \
+  --jq '.[] | [.number | tostring, .title, .url, .author.login] | @tsv' \
+  2>/dev/null)" || { echo "Error: GitHub API call failed" >&2; exit 1; }
+
+# Build lists of currently-seen PR data (bash 3.2 compatible — no associative arrays)
+CURRENT_NUMBERS=""
+CURRENT_DATA=""
+while IFS=$'\t' read -r NUMBER TITLE URL AUTHOR; do
+  [[ -z "${NUMBER}" ]] && continue
+  CURRENT_NUMBERS="${CURRENT_NUMBERS}${NUMBER}"$'\n'
+  CURRENT_DATA="${CURRENT_DATA}${NUMBER}	${URL}	${TITLE}	${AUTHOR}"$'\n'
+done <<< "${RAW}"
+
+# Detect new review requests (present now, not in state file)
+while IFS=$'\t' read -r NUMBER URL TITLE AUTHOR; do
+  [[ -z "${NUMBER}" ]] && continue
+  KNOWN="$(yq e ".reviews[] | select(.number == \"${NUMBER}\") | .number" "${STATE_FILE}" 2>/dev/null || true)"
+  if [[ -z "${KNOWN}" ]]; then
+    echo "NEW_REVIEW_REQUEST ${URL} ${NUMBER} ${TITLE} ${AUTHOR}"
+    yq e ".reviews += [{\"number\": \"${NUMBER}\", \"url\": \"${URL}\", \"title\": \"${TITLE}\", \"author\": \"${AUTHOR}\"}]" \
+      "${STATE_FILE}" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "${STATE_FILE}"
+  fi
+done <<< "${CURRENT_DATA}"
+
+# Detect removed review requests (in state file, not present now)
+KNOWN_NUMBERS="$(yq e '.reviews[].number' "${STATE_FILE}" 2>/dev/null || true)"
+while IFS= read -r NUMBER; do
+  [[ -z "${NUMBER}" ]] && continue
+  if ! printf '%s' "${CURRENT_NUMBERS}" | grep -qx "${NUMBER}"; then
+    URL="$(yq e ".reviews[] | select(.number == \"${NUMBER}\") | .url" "${STATE_FILE}")"
+    echo "REVIEW_REMOVED ${URL} ${NUMBER}"
+    yq e "del(.reviews[] | select(.number == \"${NUMBER}\"))" \
+      "${STATE_FILE}" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "${STATE_FILE}"
+  fi
+done <<< "${KNOWN_NUMBERS}"

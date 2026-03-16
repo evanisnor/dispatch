@@ -2,7 +2,7 @@
 
 ## Merge Queue Conflict Resolution Loop
 
-Triggered when `watch-merge-queue.sh` (monitored by the Primary Agent) reports conflicts after the PR was added to the merge queue.
+Triggered when `check-merge-queue.sh` (run by the activity poll) reports conflicts after the PR was added to the merge queue.
 
 1. **Receive notification** from the Primary Agent that the merge queue detected a conflict.
 2. **Pull latest `origin/main`**: `git fetch origin main && git rebase origin/main`.

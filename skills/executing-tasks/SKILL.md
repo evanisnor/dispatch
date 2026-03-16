@@ -111,7 +111,7 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
     - `MERGE_QUEUE_ENABLED=true`: once the operator confirms, call `add-to-merge-queue.sh`. Proceed to step 11.
     - `MERGE_QUEUE_ENABLED=false`: the operator merges via the GitHub UI or instructs the agent to merge. Do not call any merge command until instructed. Notify the Primary Agent when the PR is merged so downstream tasks can be unblocked.
 
-11. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `watch-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
+11. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `check-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
 
 12. **Close tracker issue** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
     - If `ISSUE_TRACKING_PROMPT` is set (non-empty): spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `ISSUE_TRACKING_PROMPT` as the task instructions, with the following context appended:

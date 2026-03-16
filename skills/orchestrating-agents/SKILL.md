@@ -30,7 +30,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Update local main after merge | Autonomous |
 | Remove merged worktrees | Autonomous |
 | Poll PR/CI/merge queue status | Autonomous |
-| Call `watch-review-requests.sh` | Autonomous |
+| Set up activity poll via CronCreate | Autonomous |
 | Spawn a Review Agent | Autonomous |
 | Spawn a Planning Agent | **Requires human approval first** |
 | Spawn a batch of Task Agents | **Requires human approval first** |
@@ -44,9 +44,9 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 
 ### 0. Review Monitoring
 
-Run `watch-review-requests.sh` continuously throughout the session to detect incoming GitHub review requests. Handle all events per [CODE_REVIEW.md](CODE_REVIEW.md).
+The activity poll (Section 7) runs `check-review-requests.sh` on each cycle to detect incoming GitHub review requests. Handle all events per [CODE_REVIEW.md](CODE_REVIEW.md).
 
-On startup, this is launched in Startup Reconciliation step 7a. For sessions that skip reconciliation (e.g., first-run Scenario A), start `watch-review-requests.sh` immediately after the greeting.
+On startup, the activity poll is set up in Startup Reconciliation step 7. For sessions that skip reconciliation (e.g., first-run Scenario A), set up the activity poll immediately after the greeting.
 
 ### 1. Planning Phase
 
@@ -134,7 +134,7 @@ See [STACKED_WORKTREES.md](STACKED_WORKTREES.md) for full lifecycle documentatio
 
 ### 4. PR and CI Monitoring
 
-After a PR is opened — or after startup reconciliation resumes monitoring for an existing open PR (Startup Reconciliation step 7b) — use `watch-pr-status.sh` and `watch-merge-queue.sh` as described in [PR_MONITORING.md](PR_MONITORING.md). Handle all exit codes identically regardless of whether the PR was newly opened or resumed from a prior session.
+After a PR is opened — or after startup reconciliation resumes monitoring for an existing open PR (Startup Reconciliation step 7) — the activity poll calls `check-pr-status.sh` and `check-merge-queue.sh` as described in [PR_MONITORING.md](PR_MONITORING.md). Handle all exit codes identically regardless of whether the PR was newly opened or resumed from a prior session.
 
 ### 5. Post-Merge Cleanup
 
@@ -218,15 +218,7 @@ On every startup, before resuming work:
    > - **Clean up** — remove the worktree and reset the task to pending.
    > - **Leave** — keep the worktree for manual inspection.
 
-7. **Resume monitoring.** After resolving all escalations above, start background monitoring:
-
-   a. **Review request monitoring.** Start `watch-review-requests.sh` as a background process. This fulfills Section 0 (Review Monitoring) for sessions that begin with startup reconciliation.
-
-   b. **PR monitoring for existing open PRs.** For each task with `status: in_progress` and an open PR (detected in step 3b):
-      - If the PR is in the merge queue: call `watch-merge-queue.sh <pr-url>` and handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring.
-      - Otherwise (PR open, awaiting review or CI): call `watch-pr-status.sh <pr-url>` and handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § PR and CI Monitoring.
-
-      Resume monitoring regardless of whether the Task Agent is alive or dead. A dead agent is handled separately by the orphaned worktree escalation (step 6) or the Recommendation Priority Table, but monitoring must run independently so PR events are not missed.
+7. **Set up activity poll.** After resolving all escalations above, create the activity poll via CronCreate (see Section 7: Activity Polling). This single cron job replaces all per-script background processes — it runs `check-review-requests.sh`, `check-pr-status.sh` for each active PR, `check-merge-queue.sh` for each PR in the merge queue, and agent liveness checks via `TaskGet`. Store the returned cron job ID for the session.
 
 ## Startup Greeting
 
@@ -345,6 +337,37 @@ yq e -i "($TASKS_PATH[] | select(.id == \"<task-id>\")).status = \"done\"" <plan
 ```
 
 Apply the same pattern for any other field update (`agent_id`, `branch`, `worktree`, `result`, etc.). Never hardcode a yq path that assumes a specific envelope key.
+
+## 7. Activity Polling
+
+All periodic monitoring is consolidated into a single CronCreate job. This replaces the previous model of long-running background `watch-*` shell scripts.
+
+### Setup
+
+Create the activity poll using CronCreate:
+
+- **Schedule:** `*/20 * * * *` (every 20 minutes)
+- **Prompt:** The consolidated check prompt below.
+
+Store the returned cron job ID for the session. Set up the activity poll:
+- During Startup Reconciliation (step 7), after resolving all escalations.
+- For first-run sessions (Scenario A), immediately after the greeting.
+
+### Consolidated Check Prompt
+
+On each activity poll cycle, execute the following checks in order:
+
+1. **Review requests:** Run `check-review-requests.sh`. Handle `NEW_REVIEW_REQUEST` and `REVIEW_REMOVED` events per [CODE_REVIEW.md](CODE_REVIEW.md).
+
+2. **PR status:** For each task with `status: in_progress` and an open PR (not in the merge queue), run `check-pr-status.sh <pr-url>`. Handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § PR and CI Monitoring.
+
+3. **Merge queue:** For each task with `status: in_progress` and a PR in the merge queue, run `check-merge-queue.sh <pr-url>`. Handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring.
+
+4. **Agent liveness:** For each task with `status: in_progress` and an `agent_id`, call `TaskGet <agent_id>`. Handle dead, stalled, and healthy agents per [PR_MONITORING.md](PR_MONITORING.md) § Liveness Checks.
+
+### Timeout Detection
+
+The check scripts (`check-pr-status.sh`, `check-merge-queue.sh`) persist state files between invocations. If a PR's state remains unchanged for `POLLING_TIMEOUT_MINUTES`, the script emits a `TIMEOUT` line in stdout. On seeing this line, escalate to the human with the PR URL and elapsed time.
 
 ## Hard Constraints
 

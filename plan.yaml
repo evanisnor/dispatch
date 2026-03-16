@@ -5058,3 +5058,10 @@ tasks:
     description: >
       Surface worktrees that exist outside any Dispatch plan as "independent" worktrees in the status display and startup greeting. Rename "untracked" terminology to "independent" throughout. Show independent worktrees in both the Worktrees status table and the concierge greeting with branch name and associated PR info. Update STATUS.md, skills/status/SKILL.md, and skills/orchestrating-agents/SKILL.md.
 
+  - id: 96
+    name: cron-based-activity-polling
+    status: done
+    depends_on: []
+    description: >
+      Replace blocking-loop polling scripts (watch-review-requests.sh, watch-pr-status.sh, watch-merge-queue.sh) with single-shot check scripts (check-review-requests.sh, check-pr-status.sh, check-merge-queue.sh) and use CronCreate for periodic invocation. Update all skill documentation to reference the new scripts and the CronCreate-based activity poll. watch-ci.sh (used by Task Agents) is out of scope and remains unchanged.
+

@@ -4,7 +4,7 @@ This document defines how the Orchestrating Agent handles incoming GitHub pull r
 
 ## Overview
 
-The Orchestrating Agent runs `watch-review-requests.sh` continuously. On each `NEW_REVIEW_REQUEST` event it immediately notifies the human and spawns a Review Agent in the background. The Review Agent analyzes the PR and returns structured context. When the human is ready to review, the OA presents that context and opens a tmux diff window. The human approves via the OA; comments are made manually on GitHub.
+The activity poll runs `check-review-requests.sh` on each cycle. On each `NEW_REVIEW_REQUEST` event it immediately notifies the human and spawns a Review Agent in the background. The Review Agent analyzes the PR and returns structured context. When the human is ready to review, the OA presents that context and opens a tmux diff window. The human approves via the OA; comments are made manually on GitHub.
 
 ## Pending Reviews
 
@@ -31,7 +31,7 @@ Status values:
 
 ## Detection and Dispatch
 
-`watch-review-requests.sh` emits events to stdout. Handle each:
+`check-review-requests.sh` emits events on each invocation. Handle each:
 
 ### `NEW_REVIEW_REQUEST <pr-url> <pr-number> <title> <author>`
 

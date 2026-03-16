@@ -62,7 +62,8 @@ dispatch/
 │   ├── config.sh                 # Config loader — merges settings.yaml + .dispatch.yaml
 │   ├── load-plan.sh              # Fetch plan YAML from plan storage repo
 │   ├── save-plan.sh              # Persist plan YAML with git-based mutex lock
-│   └── watch-merge-queue.sh      # Poll merge queue status
+│   ├── check-review-requests.sh   # Single-shot review request check
+│   └── check-merge-queue.sh      # Single-shot merge queue status check
 └── skills/
     ├── orchestrating-agents/
     │   ├── SKILL.md              # Delegation workflow
