@@ -5044,3 +5044,10 @@ tasks:
     description: >
       Fix the Orchestrating Agent's Startup Reconciliation to automatically resume PR monitoring for existing open PRs. Currently, reconciliation detects in-progress tasks with open PRs but never launches watch-pr-status.sh or watch-merge-queue.sh for them, leaving the agent idle after greeting. Add a new step 7 to Startup Reconciliation that starts watch-review-requests.sh and resumes PR monitoring for every in-progress task with an open PR. Also clarify Section 0 (Review Monitoring) startup tie-in, expand Section 4 (PR and CI Monitoring) to cover resumed monitoring, and update Recommendation Priority 3 to reflect that monitoring is resumed automatically. All changes are in skills/orchestrating-agents/SKILL.md only — no script changes needed.
 
+  - id: 94
+    name: bash-3.2-compat-watch-review-requests
+    status: done
+    depends_on: [11]
+    description: >
+      Fix watch-review-requests.sh to work with bash 3.2 (macOS default). The script used `declare -A` associative arrays which require bash 4+. Replace with plain string variables and grep-based lookups that are fully compatible with bash 3.2.
+

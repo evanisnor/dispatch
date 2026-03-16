@@ -35,39 +35,37 @@ while true; do
     --jq '.[] | [.number | tostring, .title, .url, .author.login] | @tsv' \
     2>/dev/null || true)"
 
-  # Build a set of currently-seen PR numbers
-  declare -A CURRENT_PRS=()
+  # Build lists of currently-seen PR data (bash 3.2 compatible — no associative arrays)
+  CURRENT_NUMBERS=""
+  CURRENT_DATA=""
   while IFS=$'\t' read -r NUMBER TITLE URL AUTHOR; do
     [[ -z "${NUMBER}" ]] && continue
-    CURRENT_PRS["${NUMBER}"]="${URL}	${TITLE}	${AUTHOR}"
+    CURRENT_NUMBERS="${CURRENT_NUMBERS}${NUMBER}"$'\n'
+    CURRENT_DATA="${CURRENT_DATA}${NUMBER}	${URL}	${TITLE}	${AUTHOR}"$'\n'
   done <<< "${RAW}"
 
   # Detect new review requests (present now, not in state file)
-  for NUMBER in "${!CURRENT_PRS[@]}"; do
+  while IFS=$'\t' read -r NUMBER URL TITLE AUTHOR; do
+    [[ -z "${NUMBER}" ]] && continue
     KNOWN="$(yq e ".reviews[] | select(.number == \"${NUMBER}\") | .number" "${STATE_FILE}" 2>/dev/null || true)"
     if [[ -z "${KNOWN}" ]]; then
-      IFS=$'\t' read -r URL TITLE AUTHOR <<< "${CURRENT_PRS[${NUMBER}]}"
       echo "NEW_REVIEW_REQUEST ${URL} ${NUMBER} ${TITLE} ${AUTHOR}"
-      # Record in state file
       yq e ".reviews += [{\"number\": \"${NUMBER}\", \"url\": \"${URL}\", \"title\": \"${TITLE}\", \"author\": \"${AUTHOR}\"}]" \
         "${STATE_FILE}" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "${STATE_FILE}"
     fi
-  done
+  done <<< "${CURRENT_DATA}"
 
   # Detect removed review requests (in state file, not present now)
   KNOWN_NUMBERS="$(yq e '.reviews[].number' "${STATE_FILE}" 2>/dev/null || true)"
   while IFS= read -r NUMBER; do
     [[ -z "${NUMBER}" ]] && continue
-    if [[ -z "${CURRENT_PRS[${NUMBER}]+x}" ]]; then
+    if ! printf '%s' "${CURRENT_NUMBERS}" | grep -qx "${NUMBER}"; then
       URL="$(yq e ".reviews[] | select(.number == \"${NUMBER}\") | .url" "${STATE_FILE}")"
       echo "REVIEW_REMOVED ${URL} ${NUMBER}"
-      # Remove from state file
       yq e "del(.reviews[] | select(.number == \"${NUMBER}\"))" \
         "${STATE_FILE}" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "${STATE_FILE}"
     fi
   done <<< "${KNOWN_NUMBERS}"
-
-  unset CURRENT_PRS
 
   # Check timeout
   ELAPSED=$(( ELAPSED + POLL_INTERVAL ))
