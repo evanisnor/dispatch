@@ -13,8 +13,8 @@ set -euo pipefail
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source shared config
-# shellcheck source=../../scripts/config.sh
-source "${_SCRIPT_DIR}/../../scripts/config.sh"
+# shellcheck source=../../../scripts/config.sh
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 # --- Validate arguments ---
 if [[ $# -ne 3 ]]; then
