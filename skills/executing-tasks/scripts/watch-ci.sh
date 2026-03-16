@@ -18,7 +18,8 @@ if [[ -z "${TARGET}" ]]; then
   exit 3
 fi
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 POLL_INTERVAL=30
 TIMEOUT_SECONDS=$(( POLLING_TIMEOUT_MINUTES * 60 ))

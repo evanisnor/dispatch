@@ -9,7 +9,8 @@
 
 set -euo pipefail
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 # Determine the main worktree path (first entry in git worktree list)
 MAIN_WORKTREE="$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')"

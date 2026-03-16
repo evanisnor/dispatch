@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # config.sh — shared configuration loader
-# Sourced by all skill scripts via:
-#   source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+# Sourced by all skill scripts via BASH_SOURCE-relative path:
+#   _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#   source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 #
 # Resolution priority (highest to lowest):
 #   1. epic.config.* in the loaded plan YAML (applied by caller via apply_epic_config)

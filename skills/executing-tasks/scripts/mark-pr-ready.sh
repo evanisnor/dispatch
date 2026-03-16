@@ -13,7 +13,8 @@ if [[ -z "${PR}" ]]; then
   exit 1
 fi
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 # Check the base branch of the PR
 BASE_BRANCH="$(gh pr view "${PR}" --json baseRefName --jq '.baseRefName' 2>/dev/null)"

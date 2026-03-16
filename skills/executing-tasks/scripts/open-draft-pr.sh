@@ -15,7 +15,8 @@ if [[ -z "${BRANCH}" || -z "${TITLE}" || -z "${BODY}" ]]; then
   exit 1
 fi
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 PR_URL="$(gh pr create \
   --draft \

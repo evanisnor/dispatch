@@ -14,7 +14,8 @@ if [[ -z "${BRANCH}" ]]; then
   exit 1
 fi
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 # Refuse to push to any protected branch
 for protected in "${PROTECTED_BRANCHES[@]}"; do

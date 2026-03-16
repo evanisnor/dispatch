@@ -5145,3 +5145,14 @@ tasks:
       CODE_REVIEW.md, and executing-tasks/SKILL.md to use the appropriate
       banner style.
 
+  - id: 103
+    name: fix-claude-skill-dir-path-resolution
+    status: done
+    depends_on: [99]
+    description: >
+      Fix CLAUDE_SKILL_DIR path resolution bug in 6 skill scripts. When dispatch
+      runs as a cached plugin, CLAUDE_SKILL_DIR points to the skill's scripts/
+      subdirectory, so ../../scripts/config.sh resolves incorrectly. Replace all
+      6 occurrences with BASH_SOURCE[0]-relative sourcing pattern established in
+      task 99. Update stale comment in config.sh to reflect the new pattern.
+

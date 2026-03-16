@@ -20,7 +20,8 @@ if [[ -z "${PR}" ]]; then
   exit 4
 fi
 
-source "${CLAUDE_SKILL_DIR}/../../scripts/config.sh"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
 # Extract PR number for state file naming
 PR_NUMBER="$(printf '%s' "${PR}" | grep -oE '[0-9]+$' || echo "${PR}")"
