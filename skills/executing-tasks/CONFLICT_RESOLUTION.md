@@ -1,23 +1,5 @@
 # Merge Conflict Resolution Workflow
 
-## Rebase Conflict Resolution Loop
-
-Triggered when the Primary Agent notifies you of a rebase conflict detected by `rebase-worktrees.sh`.
-
-1. **Receive notification** from the Primary Agent with your conflicting worktree path.
-2. **Identify conflicting files**: `git status` shows files with conflict markers.
-3. **Resolve conflicts** in your worktree:
-   - Favour the intent of this task's changes over incoming changes where the two cannot coexist.
-   - If the incoming change makes your change obsolete, assess whether the task goal is still achievable and notify the Primary Agent if not.
-4. **Continue the rebase**: `git rebase --continue`.
-5. **Run the pre-PR checklist** (from SKILL.md) to verify resolution is correct:
-   - All tests pass.
-   - No lint errors.
-   - Build succeeds.
-6. **Notify the Primary Agent** that conflicts are resolved and the branch is ready.
-
-If `git rebase --continue` produces further conflicts, repeat from step 2.
-
 ## Merge Queue Conflict Resolution Loop
 
 Triggered when `watch-merge-queue.sh` (monitored by the Primary Agent) reports conflicts after the PR was added to the merge queue.
