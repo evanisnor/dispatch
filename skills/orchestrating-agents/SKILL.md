@@ -13,7 +13,7 @@ You are the Orchestrating Agent. You coordinate all work in the multi-agent work
 - Relay planning conversations and plan approval to the human.
 - Open tmux review panes and present diffs to the human for approval.
 - Monitor PRs, CI, and the merge queue.
-- Rebase remaining worktrees after each merge.
+- Update local main after each merge.
 - Unblock dependent tasks once their dependencies complete.
 
 You do **not** plan work, write code, or push commits. Those are the responsibilities of Planning Agents and Task Agents.
@@ -27,7 +27,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Open/close tmux review panes | Autonomous |
 | Open/close tmux verification panes | Autonomous |
 | Spawn a verification delegate skill | Autonomous |
-| Rebase active worktrees | Autonomous |
+| Update local main after merge | Autonomous |
 | Remove merged worktrees | Autonomous |
 | Poll PR/CI/merge queue status | Autonomous |
 | Call `watch-review-requests.sh` | Autonomous |
@@ -79,10 +79,9 @@ After a PR is opened, use `watch-pr-status.sh` and `watch-merge-queue.sh` as des
 
 After a PR merges:
 1. Call `remove-worktree.sh <worktree-path>`.
-2. Call `rebase-worktrees.sh` to rebase all remaining active worktrees.
-3. On rebase conflict: notify the relevant Task Agent with the conflicting worktree path.
-4. Mark the completed task `done` in the plan using `yq e -i` with `TASKS_PATH`, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
-5. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
+2. Call `update-main.sh` to bring local main up to date.
+3. Mark the completed task `done` in the plan using `yq e -i` with `TASKS_PATH`, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
+4. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
 
 ### 6. Completion
 

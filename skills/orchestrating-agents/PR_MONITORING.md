@@ -37,9 +37,8 @@ Once a Task Agent calls `add-to-merge-queue.sh`, call `watch-merge-queue.sh <pr-
 ### Success (exit 0)
 1. Update task `status: done` and `result.merged_at` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 2. Call `remove-worktree.sh <worktree-path>`.
-3. Call `rebase-worktrees.sh` to rebase all remaining active worktrees.
-4. For any worktree with a rebase conflict, notify the relevant Task Agent (see REVIEW.md — merge conflict review loop).
-5. Unblock dependent tasks: for each task whose `depends_on` are all `done`, set `status: pending`.
+3. Call `update-main.sh` to bring local main up to date.
+4. Unblock dependent tasks: for each task whose `depends_on` are all `done`, set `status: pending`.
 
 ### Conflicts (exit 1)
 1. Notify the Task Agent to resolve the conflict.

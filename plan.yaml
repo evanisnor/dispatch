@@ -4085,7 +4085,7 @@ tasks:
 
   - id: 77
     name: update-main-docs
-    status: pending
+    status: done
     depends_on: [76]
     description: >
       Update documentation to reflect the removal of worktree rebasing and the rename from

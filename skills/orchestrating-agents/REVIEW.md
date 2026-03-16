@@ -113,9 +113,9 @@ Triggered when a PR reviewer requests changes after the PR is open.
 
 ## Merge Conflict Review Loop
 
-Triggered when a rebase or merge queue conflict is detected.
+Triggered when a merge queue conflict is detected.
 
-1. Receive conflict notification (from `rebase-worktrees.sh` or `watch-merge-queue.sh`).
+1. Receive conflict notification (from `watch-merge-queue.sh`).
 2. Notify the Task Agent to resolve the conflict in its worktree.
 3. When the Task Agent reports resolution:
    a. Call `open-review-pane.sh "review-conflict-<task-id>" "<worktree-path>"`. Store the returned window ID.
