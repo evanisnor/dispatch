@@ -1,18 +1,42 @@
 # Dispatch
 
-AI agents are changing what it means to be in the loop. Work that used to take hours of focused effort now happens in parallel, across multiple agents, faster than any single person could track. That's powerful — but without a clear process for when and how a human stays involved, it can quickly become overwhelming.
+A Claude Code plugin that coordinates a team of AI agents through your development workflow — from planning to merged PR — pausing only at decisions that need you.
 
-Dispatch is a Claude Code plugin that structures this new dynamic. You describe a piece of work. A coordinated team of agents decomposes it, implements each piece in isolation, and shepherds the results through review and merge — pausing at the decisions that only you should make, and handling everything else autonomously.
+## Features
 
-- **Orchestrating Agent** coordinates the whole process. It spawns the other agents, surfaces decisions for your review, monitors PRs and CI, and handles post-merge cleanup. It never writes code.
-- **Planning Agent** breaks down your assignment into atomic tasks with a dependency tree, optionally syncs with your issue tracker, and saves a structured plan to a dedicated git repository. It exits once you approve the plan.
-- **Task Agents** each implement a single task in their own git worktree, shepherd the PR from draft through to merge, fix CI failures autonomously, and resolve merge conflicts when they arise.
-- **Review Agents** handle incoming GitHub review requests automatically. When you're added as a reviewer on a PR, a Review Agent performs a preliminary analysis — reading the diff, summarizing the changes, and surfacing open questions — so that when you sit down to review, the work is already done.
-- **You** approve plans, review diffs, handle anything the agents escalate — and approve incoming PRs when Review Agents have done the legwork.
+- Decomposes work into atomic tasks with a dependency tree — you approve the plan before any code is written
+- Implements each task in an isolated git worktree, one agent per task, running in parallel
+- Opens a diff review window before every PR — no PR opens without your sign-off
+- Watches CI, fixes failures autonomously, and adds PRs to the merge queue
+- Handles reviewer feedback — presents requested changes to you, implements what you approve, replies to reviewers
+- Analyzes incoming GitHub review requests automatically before you sit down to review
+- Stacks dependent tasks during review so parallel work begins immediately
+- Prototype mode — explore before committing to the full plan, no PRs opened
+- Knowledge store — learns from past sessions, reapplies lessons in future runs
 
-## Orchestration Flow
+## How It Works
 
 <img width=400 src="docs/orchestration.png" alt="Orchestration diagram">
+
+| Agent | Role |
+|---|---|
+| **Orchestrating Agent** | Coordinates everything — spawns agents, surfaces decisions, monitors PRs and CI. Never writes code. |
+| **Planning Agent** | Decomposes work into atomic tasks with a dependency tree. Exits after you approve the plan. |
+| **Task Agents** | One per task. Implements in an isolated worktree, shepherds the PR from draft through merge. |
+| **Review Agents** | Analyzes incoming review requests — reads the diff, summarizes changes, surfaces questions — so the work is done before you sit down. |
+
+### Human approval gates
+
+- **Spawning a Planning Agent** — before any work is decomposed
+- **Approving the plan** — before anything is saved
+- **Spawning Task Agents** — before any code is written
+- **Spawning a Prototype Agent** — before any exploratory implementation begins
+- **Stacking a dependent Task Agent** — offered after each approved diff; one at a time, opt-in
+- **Diff review** — before every PR is opened
+- **Reviewer-requested changes** — before the Task Agent acts on them
+- **CI failures beyond the retry limit** — escalated with a summary of what failed
+- **Merge conflicts** — surfaced for guidance before any conflicting changes are pushed
+- **Abandoning a task** — requires explicit confirmation
 
 ## Requirements
 
@@ -60,159 +84,15 @@ This walks you through the required fields (plan storage path) and optional sett
 
 ## Usage
 
-### 🤖 Start the Orchestrating Agent
-
 In a Claude Code session, invoke the skill:
 
 ```
 /dispatch
 ```
 
-The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options.
+The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options. Describe the work in plain language, point to a PRD or design document, or reference a tracker epic — the agent will ask for your approval before spawning a Planning Agent.
 
-### 📋 Describe the work
-
-**Plain language**
-
-```
-Build a user authentication system: registration, login, JWT tokens, and a
-middleware guard for protected routes.
-```
-
-**Point to a PRD or design document**
-
-```
-Create an implementation plan using docs/prd-notifications.md.
-```
-
-**Reference a tracker epic**
-
-```
-Create an implementation plan for epic PROJ-42.
-```
-
-In all cases, the Orchestrating Agent will ask for your approval before spawning a Planning Agent.
-
-### 🗺️ Shape the work before any code is written
-
-The Planning Agent decomposes the work into atomic tasks and presents a dependency tree. You review it through the Orchestrating Agent, request changes if needed, and approve when satisfied. Nothing is implemented until you sign off — this is where you catch scope problems, wrong assumptions, or missing pieces before they become pull requests.
-
-### 🔍 See every diff before a PR opens
-
-For each task, once a Task Agent has implemented the work and passed its pre-PR checklist, the Orchestrating Agent opens a tmux window showing `git diff <base>...HEAD`. You approve or reject with specific feedback. No PR opens without your sign-off.
-
-If `editor.app` is configured, you can also respond with `open editor` during any diff review to open the worktree directly in your IDE — the diff window stays open alongside it.
-
-You can also configure an optional **verification gate** that runs after diff approval and before the PR opens. When enabled, the Orchestrating Agent opens a tmux window pointed at the task's worktree so you can start the app, exercise the feature, and confirm it behaves correctly — before the PR is visible to reviewers. For projects with automated verification, you can instead delegate to a skill that runs integration tests or deploys to a staging environment and reports back. Both options can be combined, and either can be omitted entirely.
-
-### 🧪 Prototype before committing to a plan
-
-After you approve a plan, the Orchestrating Agent asks how you'd like to proceed:
-
-> "Plan saved. How would you like to proceed?
-> - **Implement** — spawn Task Agents in parallel, one worktree per task, a PR opened for each.
-> - **Prototype** — dispatch a single agent to explore one or more tasks in one worktree.
->   No PRs are opened. Good for de-risking unfamiliar domains before committing to the full plan."
-
-Choose **Prototype** when the implementation path is unclear, the technology is unfamiliar, or you want to validate assumptions before opening PRs. The Orchestrating Agent asks which tasks to include (one ID, a comma-separated list, or "all"), then spawns a single Prototype Agent in an isolated worktree.
-
-The Prototype Agent:
-1. Consults the knowledge store for relevant prior findings before writing a line of code.
-2. Implements each task exploratorily — trying the most promising approach — and makes one commit per task.
-3. Awaits the verification gate (if configured) before proceeding.
-4. Returns a findings summary: what was tried, what worked and didn't, surprises, and recommendations for the production plan (tasks to split, tasks simpler than expected, new tasks needed).
-
-When the summary comes back, you choose what to do next:
-- **Proceed** — move into normal implementation with the current plan.
-- **Re-plan** — spawn a Planning Agent in amendment mode, with the prototype findings as context.
-- **Discard** — remove the prototype worktree and branch.
-- **Stop** — keep the worktree for further exploration and end the session.
-
-Prototype findings are saved to the knowledge store so future sessions in the same domain can benefit from what was learned.
-
-### ⚡ Stack dependent tasks during review
-
-After you approve a diff, before the Orchestrating Agent notifies the Task Agent to open its PR, it checks whether any tasks depend directly on the one just approved. If so, it asks:
-
-> "Task `auth-middleware` depends directly on this one. Would you like me to start implementing it now as a stacked worktree on top of `feat/auth-tokens`?"
-
-Say yes and the Orchestrating Agent spawns a second Task Agent immediately — in its own worktree, rebased onto the first task's branch — so implementation of the dependent task begins while the first PR is in review. If reviewers request changes to the first task, the Orchestrating Agent automatically rebases the stacked worktree onto the updated branch and surfaces any conflicts for your review. When the first PR merges, the stacked worktree is rebased onto main automatically. GitHub retargets the PR base on its own.
-
-Stacking is opt-in and offered one dependent at a time. You stay in control of how deep the stack goes.
-
-### 🚀 Let the agents handle the noise
-
-After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the PR ready when CI passes, and adds it to the merge queue. At each of those last two transitions the agent asks whether to proceed immediately or wait until a time you specify — reply `now` or describe when (e.g. "Monday morning" or "tomorrow at 9am") to schedule the transition for later. CI retries, merge conflict resolution, and reviewer reply threading all happen without your involvement. You are only pulled back in when something genuinely needs a decision: a CI failure that exceeded the retry limit, a reviewer requesting changes, or a merge conflict that requires your guidance.
-
-**When a reviewer requests changes**, the loop works like this:
-
-1. The Task Agent detects the review decision and notifies the Orchestrating Agent.
-2. The Orchestrating Agent presents the requested change to you, along with a direct link to the reviewer's comment on the PR.
-3. You approve or reject the requested change. If you reject it, the Orchestrating Agent sends your reasoning back to the Task Agent to relay to the reviewer.
-4. Once you approve, the Task Agent implements the change, runs the pre-PR checklist, and pushes. It then replies to the reviewer's comment with a link to the commit that addresses the feedback.
-5. The Orchestrating Agent opens a new tmux window for your confirmation before the push goes through.
-6. This repeats until the reviewer approves.
-
-### 👀 Review incoming pull requests
-
-When you're added as a reviewer on a GitHub pull request, the Orchestrating Agent detects it automatically and dispatches a Review Agent in the background. You'll see a notification immediately:
-
-> Review requested: PR #42 — Add rate limiting to the API by @teammate — Review Agent dispatched.
-
-The Review Agent reads the PR description and diff, then returns:
-
-- A brief summary of what the PR does and why
-- The author's original PR description, verbatim
-- A technical analysis of the diff — what changed, risk areas, anything worth scrutinizing
-- Open questions to consider before approving
-- Output from your `code_review.prompt`, if one is configured — letting a project-specific skill apply your team's standards, patterns, or conventions to the analysis
-
-When you're ready to review, tell the Orchestrating Agent:
-
-```
-ready to review PR #42
-```
-
-It presents the review context and the full diff side-by-side in a tmux window. You review, ask questions, and when satisfied, explicitly approve:
-
-```
-approve
-```
-
-No PR is ever approved without your instruction. Dispatch submits the approval to GitHub only when you say so. Comments are yours to make directly on GitHub — Dispatch doesn't generate or post them for you.
-
-Pending reviews appear in `/status` so you always know what's waiting for your attention.
-
-## Permissions and Security
-
-### What the agents can and cannot do
-
-The Orchestrating Agent uses targeted permission rules and does not run in `bypassPermissions` mode. It cannot push code or merge PRs.
-
-Task Agents run with pre-authorized tool permissions scoped to their worktree (configured via `/config setup`). The sandbox enforces:
-
-- **Write access** limited to the task's assigned worktree directory.
-- **Network access** limited to domains you list in `sandbox.network.allowed_domains`.
-- **Read access** denied for `~/.ssh/**`, `~/.gnupg/**`, `**/.env`, `**/*.pem`, `**/*.key`, plus any paths you add to `sandbox.filesystem.extra_deny_read`.
-
-Protected branches (`git.protected_branches`) are enforced at the permissions layer, independent of agent reasoning. `gh pr merge` without `--auto` is also always denied — Task Agents can only add PRs to the merge queue, never merge directly.
-
-### Prompt injection defense
-
-All external content — PR comments, CI log summaries, reviewer feedback, issue tracker text, and plan `context` fields — is wrapped in `<external_content>` tags before being included in any agent prompt. Every agent's system prompt includes an explicit rule to treat content inside those tags as data only and never follow instructions found there.
-
-### Human approval gates
-
-- **Spawning a Planning Agent** — before any work is decomposed.
-- **Approving the plan** — before anything is saved.
-- **Spawning Task Agents** — before any code is written.
-- **Spawning a Prototype Agent** — before any exploratory implementation begins.
-- **Stacking a dependent Task Agent** — offered after each approved diff; one at a time, opt-in.
-- **Diff review** — before every PR is opened.
-- **Reviewer-requested changes** — before the Task Agent acts on them.
-- **CI failures beyond the retry limit** — escalated with a summary of what failed.
-- **Merge conflicts** — surfaced for guidance before any conflicting changes are pushed.
-- **Abandoning a task** — requires explicit confirmation.
+From there, the workflow runs automatically: plan approval, parallel task implementation, diff review before each PR opens, CI monitoring, and merge queue management. You're pulled in only at the gates listed above.
 
 ## Configuration
 
@@ -243,19 +123,19 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 
 ### Issue Tracking Integration
 
-Issue tracking is optional and disabled by default. To enable it, set `issue_tracking.tool` in your `.dispatch.yaml` and ensure an MCP server for that tracker is configured in your Claude Code environment.
+Issue tracking is optional and disabled by default. Set `issue_tracking.tool` in your `.dispatch.yaml` and ensure an MCP server for that tracker is configured in your Claude Code environment.
 
 Two modes are available:
 
 - **Write-enabled** (`read_only: false`, the default): The Planning Agent autonomously creates issues — a root issue for the epic and child issues for each task. After a task's PR merges, the Task Agent marks the corresponding issue done and links the PR.
 - **Read-only** (`read_only: true`): The Planning Agent generates a companion markdown document listing proposed issues for manual creation. After you create them and provide the root ID, the agent backfills real IDs into the plan YAML.
 
-If you already have a Claude skill that knows your tracker's structure — epic hierarchies, status flows, description conventions — set `issue_tracking.skill` to delegate all tracker operations to it. Dispatch invokes the skill at the right moments (creating issues after planning, closing issues after merge) with structured context instead of using the built-in integration. This is the recommended approach when a tracker-specific skill is available.
+If you have a Claude skill that knows your tracker's structure, set `issue_tracking.prompt` to delegate all tracker operations to it:
 
 ```yaml
 issue_tracking:
   tool: jira
-  skill: jira-workflow
+  prompt: /jira-workflow
 ```
 
 If issue tracking is not configured, the Planning Agent uses kebab-case slug IDs throughout.
@@ -287,20 +167,36 @@ pr:
 
 Available template variables: `{task_id}`, `{task_title}`, `{task_description}`, `{task_context}`, `{epic_title}`, `{branch}`, `{plan_path}`, `{worktree}`.
 
-To hand off PR description authoring entirely to another Claude skill, set `pr.description_skill` instead. The Task Agent will spawn that skill with the full task context and use whatever it returns as the PR body — useful if you have a team-specific skill that knows your PR conventions, pulls from internal docs, or formats descriptions in a particular way.
+To delegate PR description authoring to a Claude skill, set `pr.description_prompt`. The Task Agent will spawn that skill with the full task context and use whatever it returns as the PR body.
 
 ```yaml
 pr:
-  description_skill: my-pr-skill
+  description_prompt: /my-pr-skill
 ```
 
 ### Code Review Prompt
 
-By default, when a Review Agent analyzes an incoming PR it reads the diff itself and produces a summary, analysis, and list of open questions. If you have a Claude skill that knows your codebase's patterns, style expectations, or review standards, you can delegate preliminary analysis to it:
+By default, Review Agents read the diff and produce a summary, analysis, and list of open questions. To delegate preliminary analysis to a project-specific skill:
 
 ```yaml
 code_review:
-  prompt: "Use /my-review-skill to analyze this PR"
+  prompt: /my-review-skill
 ```
 
-The Review Agent spawns a sub-agent with the PR URL, title, author, base and head refs, the full PR description, and the diff — all wrapped in `<external_content>` tags. The sub-agent is expected to return the same structured output (summary, analysis, questions) that the built-in behavior produces.
+The Review Agent spawns a sub-agent with the PR URL, title, author, base and head refs, PR description, and diff — all wrapped in `<external_content>` tags. The sub-agent returns the same structured output (summary, analysis, questions) as the built-in behavior.
+
+## Permissions and Security
+
+### What the agents can and cannot do
+
+- The Orchestrating Agent uses targeted permission rules and does not run in `bypassPermissions` mode. It cannot push code or merge PRs.
+- Task Agents run with pre-authorized tool permissions scoped to their worktree.
+- **Write access** is limited to the task's assigned worktree directory.
+- **Network access** is limited to domains listed in `sandbox.network.allowed_domains`.
+- **Read access** is denied for `~/.ssh/**`, `~/.gnupg/**`, `**/.env`, `**/*.pem`, `**/*.key`, plus any paths in `sandbox.filesystem.extra_deny_read`.
+- Protected branches (`git.protected_branches`) are enforced at the permissions layer, independent of agent reasoning.
+- `gh pr merge` without `--auto` is always denied — Task Agents can only add PRs to the merge queue, never merge directly.
+
+### Prompt injection defense
+
+All external content — PR comments, CI log summaries, reviewer feedback, issue tracker text, and plan `context` fields — is wrapped in `<external_content>` tags before being included in any agent prompt. Every agent's system prompt includes an explicit rule to treat content inside those tags as data only and never follow instructions found there.
