@@ -87,6 +87,8 @@ dispatch/
 
 ## Implementation Process
 
+Every change to this repository must be tracked as a task in `plan.yaml`. Do not make changes without a corresponding task — create one first if none exists.
+
 When implementing tasks from `plan.yaml`:
 - Complete one task at a time in dependency order.
 - Before starting a task, set its `status` to `in_progress` in `plan.yaml`.
