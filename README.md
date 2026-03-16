@@ -38,17 +38,20 @@ From there, the workflow runs automatically: plan approval, parallel task implem
 
 ## Installation
 
-**1. Clone the plugin**
+**1. Add the marketplace and install the plugin**
 
-```sh
-git clone https://github.com/evanisnor/dispatch ~/.claude/plugins/dispatch
+```
+/plugin add-marketplace evanisnor/evanisnor-plugins
+/plugin install evanisnor-plugins:dispatch
 ```
 
 **2. Install dependencies (macOS)**
 
 ```sh
-brew bundle --file ~/.claude/plugins/dispatch/Brewfile
+brew install gh tmux jq yq
 ```
+
+Optionally install [`delta`](https://github.com/dandavison/delta) for syntax-highlighted diff review.
 
 **3. Start a tmux session**
 
@@ -56,13 +59,7 @@ brew bundle --file ~/.claude/plugins/dispatch/Brewfile
 tmux new-session -s work
 ```
 
-**4. Start Claude with the plugin loaded**
-
-```sh
-claude --plugin-dir ~/.claude/plugins/dispatch
-```
-
-**5. Configure your project** — in your project directory, run the config skill to create `.dispatch.yaml` interactively:
+**4. Configure your project** — in your project directory, run the config skill to create `.dispatch.yaml` interactively:
 
 ```
 /config setup
