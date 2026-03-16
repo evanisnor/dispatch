@@ -5078,3 +5078,17 @@ tasks:
       ~/.claude/settings.json. Add a Setup subsection to README.md explaining the
       two-layer system with example JSON for both files.
 
+  - id: 98
+    name: fix-bash-permission-pattern
+    status: done
+    depends_on: [97]
+    description: >
+      Fix incorrect Bash(**) permission pattern in config skill and README.
+      Bash takes command strings, not file paths, so (**) is a path glob that
+      does not correctly match all commands. The correct pattern for "allow all
+      bash commands" is just Bash (no parens). Replace Bash(**) with Bash in
+      skills/config/SKILL.md (step 8 JSON, step 9b check list, step 9c
+      conflict check prose) and README.md (project-level JSON, global JSON,
+      deny rule note). File-path tools like Write(**) and Edit(**) are correct
+      as-is.
+

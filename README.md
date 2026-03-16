@@ -208,7 +208,7 @@ Background Task Agents (`run_in_background: true`, `isolation: "worktree"`) cann
       "Edit(**)",
       "Glob(**)",
       "Grep(**)",
-      "Bash(**)",
+      "Bash",
       "WebFetch(domain:*)"
     ]
   }
@@ -226,14 +226,14 @@ Background Task Agents (`run_in_background: true`, `isolation: "worktree"`) cann
       "Edit(**)",
       "Glob",
       "Grep",
-      "Bash(**)",
+      "Bash",
       "WebFetch(domain:*)"
     ]
   }
 }
 ```
 
-> **Note:** Deny rules override allow rules. An entry like `Bash(git *)` in `permissions.deny` will block agents from committing and pushing code even with `Bash(**)` in allow. Review your deny rules to ensure they don't conflict with agent operations.
+> **Note:** Deny rules override allow rules. An entry like `Bash(git *)` in `permissions.deny` will block agents from committing and pushing code even with `Bash` in allow. Review your deny rules to ensure they don't conflict with agent operations.
 
 Running `/config setup` handles both files automatically — it creates the project-level settings, then checks and offers to update the global settings, including conflict detection for deny rules. Existing settings (env, hooks, MCP servers, etc.) are preserved; only missing permission entries are appended.
 

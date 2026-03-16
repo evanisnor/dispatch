@@ -249,7 +249,7 @@ Walk the user through creating or updating `.dispatch.yaml`, then ensure `.claud
       "Edit(**)",
       "Glob(**)",
       "Grep(**)",
-      "Bash(**)",
+      "Bash",
       "WebFetch(domain:*)"
     ]
   }
@@ -267,9 +267,9 @@ Explain to the user:
 
    a. Read `~/.claude/settings.json`. If it does not exist, note that it will be created.
 
-   b. Check if `permissions.allow` already includes all of the following entries: `Read`, `Write(**)`, `Edit(**)`, `Glob`, `Grep`, `Bash(**)`, `WebFetch(domain:*)`.
+   b. Check if `permissions.allow` already includes all of the following entries: `Read`, `Write(**)`, `Edit(**)`, `Glob`, `Grep`, `Bash`, `WebFetch(domain:*)`.
 
-   c. **Conflict check**: Scan `permissions.deny` for entries that would override the required allow rules. Deny rules take precedence in Claude Code, so a deny entry like `Bash(git *)` would block agents even with `Bash(**)` in allow. Specifically check for deny patterns that match commands agents need: `git`, `gh pr create`, `gh pr edit`, `gh pr ready`, `gh pr merge --auto`, `yq`, `tmux`, `cd`, `cat`, `mkdir`. If conflicts are found, list them and explain the impact — e.g. "Your global settings deny `Bash(git *)`, which would block Task Agents from committing and pushing code." Ask the user if they want to remove or narrow the conflicting deny entries before proceeding.
+   c. **Conflict check**: Scan `permissions.deny` for entries that would override the required allow rules. Deny rules take precedence in Claude Code, so a deny entry like `Bash(git *)` would block agents even with `Bash` in allow. Specifically check for deny patterns that match commands agents need: `git`, `gh pr create`, `gh pr edit`, `gh pr ready`, `gh pr merge --auto`, `yq`, `tmux`, `cd`, `cat`, `mkdir`. If conflicts are found, list them and explain the impact — e.g. "Your global settings deny `Bash(git *)`, which would block Task Agents from committing and pushing code." Ask the user if they want to remove or narrow the conflicting deny entries before proceeding.
 
    d. If all required allow entries are present AND no deny conflicts exist → tell the user "Global settings already include the required permissions" → skip to step 9h.
 
