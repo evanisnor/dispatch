@@ -14,6 +14,18 @@ A Claude Code plugin that coordinates a team of AI agents through your developme
 - Prototype mode — explore before committing to the full plan, no PRs opened
 - Knowledge store — learns from past sessions, reapplies lessons in future runs
 
+## Usage
+
+In a Claude Code session, invoke the skill:
+
+```
+/dispatch
+```
+
+The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options. Describe the work in plain language, point to a PRD or design document, or reference a tracker epic — the agent will ask for your approval before spawning a Planning Agent.
+
+From there, the workflow runs automatically: plan approval, parallel task implementation, diff review before each PR opens, CI monitoring, and merge queue management. You're pulled in only at the gates listed above.
+
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) (CLI)
@@ -57,18 +69,6 @@ claude --plugin-dir ~/.claude/plugins/dispatch
 ```
 
 This walks you through the required fields (plan storage path) and optional settings. The file is gitignored — it should never be committed. To review the full config schema at any time, run `/config`.
-
-## Usage
-
-In a Claude Code session, invoke the skill:
-
-```
-/dispatch
-```
-
-The Orchestrating Agent will run startup reconciliation, then greet you with a status summary and next-step options. Describe the work in plain language, point to a PRD or design document, or reference a tracker epic — the agent will ask for your approval before spawning a Planning Agent.
-
-From there, the workflow runs automatically: plan approval, parallel task implementation, diff review before each PR opens, CI monitoring, and merge queue management. You're pulled in only at the gates listed above.
 
 ## How It Works
 
