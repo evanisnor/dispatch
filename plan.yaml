@@ -4067,3 +4067,32 @@ tasks:
     description: >
       Add knowledge read step (1.5) and write step (13.5) to skills/executing-tasks/SKILL.md. Add knowledge consultation and recording to skills/executing-tasks/CI_FEEDBACK.md.
 
+  - id: 76
+    name: update-main-script
+    status: pending
+    depends_on: []
+    description: >
+      Replace rebase-worktrees.sh with update-main.sh. The new script only updates local main
+      (no worktree rebasing). Strategy is configurable via MAIN_UPDATE_STRATEGY: "rebase"
+      (default, uses git rebase origin/main) or "merge-ff-only" (uses git merge --ff-only
+      origin/main). Add MAIN_UPDATE_STRATEGY export to scripts/config.sh (read from
+      git.main_update_strategy in .dispatch.yaml, falling back to defaults.main_update_strategy
+      in settings.yaml, fallback literal "rebase"; validate and reset to "rebase" on invalid
+      value). Add main_update_strategy: rebase to settings.yaml defaults block. Add
+      main_update_strategy under git: in .dispatch.example.yaml with comment "rebase (default)
+      or merge-ff-only". Delete skills/orchestrating-agents/scripts/rebase-worktrees.sh.
+      Create skills/orchestrating-agents/scripts/update-main.sh.
+
+  - id: 77
+    name: update-main-docs
+    status: pending
+    depends_on: [76]
+    description: >
+      Update documentation to reflect the removal of worktree rebasing and the rename from
+      rebase-worktrees.sh to update-main.sh. In SKILL.md Post-Merge Cleanup: replace step 2
+      ("Call rebase-worktrees.sh to rebase all remaining active worktrees") and step 3
+      ("On rebase conflict...") with a single step "Call update-main.sh to bring local main
+      up to date"; renumber remaining steps. In PR_MONITORING.md: same replacement for steps
+      3 and 4. In REVIEW.md merge conflict review loop: remove "rebase-worktrees.sh or" from
+      the conflict notification trigger line, leaving only "watch-merge-queue.sh".
+
