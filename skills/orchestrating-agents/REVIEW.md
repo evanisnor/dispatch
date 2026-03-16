@@ -73,15 +73,15 @@ Triggered when a Task Agent requests approval to open a PR.
 
 ## Verification Gate
 
-Runs after diff approval and before notifying the Task Agent to open the PR. Read `verification.skill` and `verification.manual_gate` from config (via `config.sh`).
+Runs after diff approval and before notifying the Task Agent to open the PR. Read `verification.prompt` and `verification.manual_gate` from config (via `config.sh`).
 
-**Step 1 — Delegate skill (if `VERIFICATION_SKILL` is set):**
+**Step 1 — Delegate prompt (if `VERIFICATION_PROMPT` is set):**
 
-1. Spawn the named skill via the Agent tool, passing these values in the prompt:
+1. Spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `VERIFICATION_PROMPT` as the task instructions, with these values appended:
    - `WORKTREE=<worktree-path>`
    - `BRANCH=<branch>`
    - `TASK_ID=<task-id>`
-2. Present the skill's output to the human.
+2. Present the sub-agent's output to the human.
 
 **Step 2 — Manual gate (if `VERIFICATION_MANUAL_GATE=true`):**
 
@@ -94,7 +94,7 @@ Runs after diff approval and before notifying the Task Agent to open the PR. Rea
 
 After both steps complete (or if neither is configured, immediately after diff approval), notify the Task Agent: "diff approved — proceed to open draft PR".
 
-If both `VERIFICATION_SKILL` and `VERIFICATION_MANUAL_GATE` are set, the skill runs first, then the manual gate opens.
+If both `VERIFICATION_PROMPT` and `VERIFICATION_MANUAL_GATE` are set, the sub-agent runs first, then the manual gate opens.
 
 ## Reviewer-Requested Change Review Loop
 

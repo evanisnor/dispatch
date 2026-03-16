@@ -67,14 +67,14 @@ Controls how the Planning Agent interacts with the tracker. `false` = autonomous
 
 ---
 
-### `issue_tracking.skill`
+### `issue_tracking.prompt`
 
 | | |
 |---|---|
 | Type | `string` |
 | Default | `""` (built-in tracker integration) |
 
-Name of a delegate skill for all tracker operations. When set, the Planning Agent and Task Agent spawn this skill via the Agent tool instead of using built-in integration. The skill receives a structured prompt with the operation type (`create_issues`, `generate_companion`, `backfill_ids`, or `close_issue`) and relevant context, and returns structured output (JSON for ID operations, markdown for companion doc generation, a confirmation string for close). Leave empty to use the built-in integration.
+Prompt for all tracker operations. When set, the Planning Agent and Task Agent spawn a general-purpose sub-agent with this prompt instead of using built-in integration. The prompt can reference a skill (e.g. `"Use /jira-issues to manage issues"`) or contain inline instructions. The sub-agent receives a structured operation context (`create_issues`, `generate_companion`, `backfill_ids`, or `close_issue`) and returns structured output (JSON for ID operations, markdown for companion doc generation, a confirmation string for close). Leave empty to use the built-in integration.
 
 ---
 
@@ -89,14 +89,14 @@ Default diff display mode in review panes. `"split"` uses `delta --side-by-side`
 
 ---
 
-### `pr.description_skill`
+### `pr.description_prompt`
 
 | | |
 |---|---|
 | Type | `string` |
 | Default | `""` (built-in `pr-description.sh`) |
 
-Name of a delegate skill to invoke for authoring PR descriptions. When set, the Task Agent spawns this skill via the Agent tool instead of calling `pr-description.sh`. The skill receives the full task context (task ID, title, description, context, epic title, branch) and must return the PR body as its output. Leave empty to use the built-in template.
+Prompt for authoring PR descriptions. When set, the Task Agent spawns a general-purpose sub-agent with this prompt instead of calling `pr-description.sh`. The prompt can reference a skill (e.g. `"Use /my-pr-style to write the PR body"`) or contain inline instructions. The sub-agent receives the full task context (task ID, title, description, context, epic title, branch) and must return the PR body as its output. Leave empty to use the built-in template.
 
 ---
 
@@ -133,14 +133,25 @@ Shell command to run automatically in the verification tmux window when `verific
 
 ---
 
-### `verification.skill`
+### `verification.prompt`
 
 | | |
 |---|---|
 | Type | `string` |
 | Default | `""` |
 
-Name of a delegate skill to spawn for automated pre-PR verification. The skill receives `WORKTREE`, `BRANCH`, and `TASK_ID` as context. Its output is presented to the human before they confirm. Useful for running integration test suites, deploying to a staging environment, or any project-specific verification logic. Independent of `verification.manual_gate` — both can be set and will run in sequence (skill first, then manual gate).
+Prompt for automated pre-PR verification. When set, the Orchestrating Agent spawns a general-purpose sub-agent with this prompt after diff approval. The prompt can reference a skill (e.g. `"Use /integration-tests to verify the build"`) or contain inline instructions. The sub-agent receives `WORKTREE`, `BRANCH`, and `TASK_ID` as context, and its output is presented to the human before the PR opens. Independent of `verification.manual_gate` — both can be set and will run in sequence (sub-agent first, then manual gate).
+
+---
+
+### `code_review.prompt`
+
+| | |
+|---|---|
+| Type | `string` |
+| Default | `""` (built-in analysis) |
+
+Prompt for preliminary PR analysis. When set, the Review Agent spawns a general-purpose sub-agent with this prompt instead of performing its own analysis. The prompt can reference a skill (e.g. `"Use /code-standards to analyze this PR"`) or contain inline instructions. The sub-agent receives the PR inputs (URL, title, author, body, diff) and must return the structured review context. Leave empty to use the built-in analysis.
 
 ---
 
@@ -209,12 +220,12 @@ Walk the user through creating or updating `.dispatch.yaml`, then ensure `.claud
    - `issue_tracking.tool` — "Do you want to connect an issue tracker? (yes/no)"
      - If yes, prompt for the tool name — "Enter your issue tracker name (e.g. jira, linear, github):"
      - Then prompt for `issue_tracking.read_only` — "Should the agent create issues autonomously, or generate a companion document for manual creation? (autonomous/manual)"
-     - Then prompt for `issue_tracking.skill` — "Do you have a Claude skill for your issue tracker? (yes/no)"
-       - If yes, prompt for the skill name — "Enter the skill name (e.g. jira-issues, linear-workflow):"
+     - Then prompt for `issue_tracking.prompt` — "Do you want to configure a prompt (or skill) for tracker operations? (yes/no)"
+       - If yes, prompt for the value — "Enter the prompt or skill invocation (e.g. \"Use /jira-issues to manage issues\"):"
    - `verification.manual_gate` — "Do you want to enable a manual verification gate after diff review? (yes/no)"
      - If yes, also prompt for `verification.startup_command` — "Enter a startup command to run in the verification window, or leave blank for an idle shell:"
-   - `verification.skill` — "Do you want to configure a delegate skill for automated pre-PR verification? (yes/no)"
-     - If yes, prompt for the skill name.
+   - `verification.prompt` — "Do you want to configure a prompt (or skill) for automated pre-PR verification? (yes/no)"
+     - If yes, prompt for the value — "Enter the prompt or skill invocation (e.g. \"Use /integration-tests to verify the build\"):"
 4. Write the resulting YAML to `.dispatch.yaml` in the current working directory.
 5. Confirm the file was written and show a summary of the values set.
 6. Determine the Dispatch plugin installation path:

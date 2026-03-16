@@ -128,7 +128,7 @@ The Review Agent reads the PR description and diff, then returns:
 - The author's original PR description, verbatim
 - A technical analysis of the diff — what changed, risk areas, anything worth scrutinizing
 - Open questions to consider before approving
-- Output from your `code_review_skill`, if one is configured — letting a project-specific skill apply your team's standards, patterns, or conventions to the analysis
+- Output from your `code_review.prompt`, if one is configured — letting a project-specific skill apply your team's standards, patterns, or conventions to the analysis
 
 When you're ready to review, tell the Orchestrating Agent:
 
@@ -186,14 +186,14 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 | `git.branch_prefix` | `string` | `""` | Prefix prepended to every task branch (e.g. `"feat/"`, `"users/evan/"`). Must end with `/` for directory-style prefixes. |
 | `issue_tracking.tool` | `string` | `""` | Name of the issue tracker (`"jira"`, `"linear"`, `"github"`, etc.). Leave empty to disable. |
 | `issue_tracking.read_only` | `boolean` | `false` | `false` = autonomous issue creation (write-enabled). `true` = generate companion doc for manual creation + backfill IDs after human provides root ID. |
-| `issue_tracking.skill` | `string` | `""` | Name of a delegate skill for all tracker operations. When set, invoked instead of built-in integration. Leave empty to use the built-in approach. |
+| `issue_tracking.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for all tracker operations. When set, a general-purpose sub-agent is spawned with this prompt instead of built-in integration. Leave empty to use the built-in approach. |
 | `diff.mode` | `"split"` \| `"unified"` | `"split"` | Diff display mode in review panes. `"split"` uses `delta --side-by-side`; `"unified"` uses standard `delta` output. No effect if `delta` is not installed. |
 | `pr.template_path` | `string` (path) | `""` | Path to a custom PR description template. Leave empty to use the built-in template. |
-| `pr.description_skill` | `string` | `""` | Name of a delegate skill for PR description authoring. Leave empty to use the built-in template or `pr.template_path`. |
+| `pr.description_prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for PR description authoring. When set, a general-purpose sub-agent is spawned with this prompt instead of calling `pr-description.sh`. Leave empty to use the built-in template or `pr.template_path`. |
 | `verification.manual_gate` | `boolean` | `false` | When `true`, opens a tmux window at the task's worktree after diff approval and waits for human confirmation before the PR opens. |
 | `verification.startup_command` | `string` | `""` | Command to run automatically in the verification window (e.g. `"npm run dev"`). Only applies when `verification.manual_gate` is `true`. |
-| `verification.skill` | `string` | `""` | Name of a delegate skill for automated pre-PR verification. Spawned after diff approval; output is presented to the human before confirmation. Independent of `manual_gate`. |
-| `code_review_skill` | `string` | `""` | Name of a delegate skill for preliminary PR analysis. When set, Review Agents spawn this skill instead of performing their own analysis. Leave empty to use the built-in behavior. |
+| `verification.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for automated pre-PR verification. Spawned after diff approval; output is presented to the human before confirmation. Independent of `manual_gate`. |
+| `code_review.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for preliminary PR analysis. When set, Review Agents spawn a sub-agent with this prompt instead of performing their own analysis. Leave empty to use the built-in behavior. |
 | `sandbox.network.allowed_domains` | `array of strings` | `["github.com", "api.github.com", "registry.npmjs.org"]` | Domains Task Agents are permitted to reach over the network. |
 | `sandbox.filesystem.extra_deny_read` | `array of glob strings` | `[]` | Additional paths to block Task Agents from reading, merged with the hardcoded base deny list. |
 | `defaults.max_ci_fix_attempts` | `integer` | `3` | How many times a Task Agent may attempt to fix a CI failure before escalating. |
@@ -253,12 +253,13 @@ pr:
   description_skill: my-pr-skill
 ```
 
-### Code Review Skill
+### Code Review Prompt
 
 By default, when a Review Agent analyzes an incoming PR it reads the diff itself and produces a summary, analysis, and list of open questions. If you have a Claude skill that knows your codebase's patterns, style expectations, or review standards, you can delegate preliminary analysis to it:
 
 ```yaml
-code_review_skill: my-review-skill
+code_review:
+  prompt: "Use /my-review-skill to analyze this PR"
 ```
 
-The Review Agent spawns the skill with the PR URL, title, author, base and head refs, the full PR description, and the diff — all wrapped in `<external_content>` tags. The skill is expected to return the same structured output (summary, analysis, questions) that the built-in behavior produces.
+The Review Agent spawns a sub-agent with the PR URL, title, author, base and head refs, the full PR description, and the diff — all wrapped in `<external_content>` tags. The sub-agent is expected to return the same structured output (summary, analysis, questions) that the built-in behavior produces.

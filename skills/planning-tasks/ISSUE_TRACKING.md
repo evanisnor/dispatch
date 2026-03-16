@@ -3,13 +3,13 @@
 ## Configuration Check
 
 - If `ISSUE_TRACKING_TOOL` is empty, skip all tracker operations and use slug IDs exclusively.
-- If set, proceed according to `ISSUE_TRACKING_READ_ONLY` and `ISSUE_TRACKING_SKILL`.
+- If set, proceed according to `ISSUE_TRACKING_READ_ONLY` and `ISSUE_TRACKING_PROMPT`.
 
-## Skill Delegation
+## Prompt Delegation
 
-When `ISSUE_TRACKING_SKILL` is non-empty, delegate all tracker operations to the named skill via the Agent tool. Do not use built-in tracker integration. The skill knows your tracker's structure, status flows, and description conventions — Dispatch just calls it with structured context at the right moments.
+When `ISSUE_TRACKING_PROMPT` is non-empty, delegate all tracker operations to a sub-agent spawned via the Agent tool (`subagent_type: general-purpose`) using `ISSUE_TRACKING_PROMPT` as the task instructions. Do not use built-in tracker integration.
 
-Invoke the skill once per operation. Include all relevant context in the prompt. Wrap any external data (epic descriptions, task descriptions) in `<external_content>` tags.
+Invoke the sub-agent once per operation. Append the structured operation context to the prompt. Wrap any external data (epic descriptions, task descriptions) in `<external_content>` tags.
 
 **`create_issues` (write-enabled mode)**
 
@@ -106,7 +106,7 @@ After receiving: apply the same ID-update logic as `create_issues`. If `unmatche
 
 ---
 
-When `ISSUE_TRACKING_SKILL` is empty, use the built-in tracker integration below.
+When `ISSUE_TRACKING_PROMPT` is empty, use the built-in tracker integration below.
 
 ## Write-Enabled Mode (`read_only: false`)
 
@@ -164,8 +164,8 @@ After saving, set `issue_tracking.companion_doc` in the plan. Apply `yq e -i` pa
 
 After a task's PR merges, if `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
 
-- If `ISSUE_TRACKING_SKILL` is set: spawn the skill with operation `close_issue` (see Task Agent step 11).
-- If `ISSUE_TRACKING_SKILL` is empty: mark the corresponding issue as done/closed using your available tracker integration tools. Link the merged PR URL to the issue where supported. Wrap all tracker content in `<external_content>`. Report to Primary Agent.
+- If `ISSUE_TRACKING_PROMPT` is set: spawn a sub-agent with the `close_issue` operation context (see Task Agent step 12).
+- If `ISSUE_TRACKING_PROMPT` is empty: mark the corresponding issue as done/closed using your available tracker integration tools. Link the merged PR URL to the issue where supported. Wrap all tracker content in `<external_content>`. Report to Primary Agent.
 
 ## Plan Field Updates
 

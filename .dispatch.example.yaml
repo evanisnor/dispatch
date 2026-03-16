@@ -9,7 +9,7 @@ git:
 issue_tracking:
   tool: jira
   read_only: false
-  skill: ""
+  prompt: ""  # optional: prompt (or "/skill-name") for all tracker operations
 
 sandbox:
   network:
@@ -25,12 +25,15 @@ diff:
 
 pr:
   template_path: ""
-  description_skill: ""
+  description_prompt: ""  # optional: prompt (or "/skill-name") for PR body authoring
 
 verification:
   manual_gate: false
   startup_command: ""
-  skill: ""
+  prompt: ""  # optional: prompt (or "/skill-name") for automated pre-PR verification
+
+code_review:
+  prompt: ""  # optional: prompt (or "/skill-name") for preliminary PR analysis
 
 defaults:
   max_ci_fix_attempts: 3

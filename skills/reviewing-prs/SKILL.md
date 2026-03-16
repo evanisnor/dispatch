@@ -20,7 +20,7 @@ You do **not** post GitHub comments, approve or reject PRs, or take any action o
 | Action | Authority |
 |---|---|
 | Read PR metadata and diff provided in prompt | Autonomous |
-| Spawn a delegate `CODE_REVIEW_SKILL` | Autonomous |
+| Spawn a delegate sub-agent via `CODE_REVIEW_PROMPT` | Autonomous |
 | Return structured review context to OA | Autonomous |
 | Post GitHub comments | **Never — not authorized** |
 | Approve or reject PRs | **Never — not authorized** |
@@ -44,14 +44,14 @@ The Orchestrating Agent provides the following in `<external_content>` tags:
 
 ### Step 1 — Delegate or Analyze
 
-**If `CODE_REVIEW_SKILL` is set (non-empty):**
+**If `CODE_REVIEW_PROMPT` is set (non-empty):**
 
-Spawn the named skill via the Agent tool:
-- Pass all PR inputs wrapped in `<external_content>` tags in the prompt.
-- Collect the structured output returned by the skill.
+Spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `CODE_REVIEW_PROMPT` as the task instructions:
+- Append all PR inputs wrapped in `<external_content>` tags to the prompt.
+- Collect the structured output returned by the sub-agent.
 - Proceed to Step 2 using that output.
 
-**If `CODE_REVIEW_SKILL` is not set (default behavior):**
+**If `CODE_REVIEW_PROMPT` is not set (default behavior):**
 
 Produce the following from the provided inputs:
 

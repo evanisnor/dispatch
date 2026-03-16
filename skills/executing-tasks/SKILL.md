@@ -50,13 +50,13 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
       ```
 
    b. If `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
-      - If `ISSUE_TRACKING_SKILL` is set: spawn the named skill via the Agent tool with:
+      - If `ISSUE_TRACKING_PROMPT` is set: spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `ISSUE_TRACKING_PROMPT` as the task instructions, with the following context appended:
         ```
         operation: mark_in_progress
         task_id: <real tracker ID from the plan>
         task_title: <task title>
         ```
-      - If `ISSUE_TRACKING_SKILL` is empty: mark the issue in progress using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
+      - If `ISSUE_TRACKING_PROMPT` is empty: mark the issue in progress using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
 
 2. **Implement** the task in your assigned worktree.
 3. **Complete pre-PR checklist** (see below).
@@ -69,8 +69,8 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
    - `TASK_CONTEXT` — 1–2 sentences explaining **why** this task exists: what problem it solves or what it enables for the rest of the epic. Do not write "Part of epic X" — that is not a why.
 
    **Choosing how to generate the PR body:**
-   - If `PR_DESCRIPTION_SKILL` is set (non-empty): spawn the named skill via the Agent tool, passing the task values above in the prompt, and use the agent's returned text as the PR body.
-   - If `PR_DESCRIPTION_SKILL` is empty: export the values as env vars and call `pr-description.sh` to render the PR body.
+   - If `PR_DESCRIPTION_PROMPT` is set (non-empty): spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `PR_DESCRIPTION_PROMPT` as the task instructions, with the task values above appended. Use the agent's returned text as the PR body.
+   - If `PR_DESCRIPTION_PROMPT` is empty: export the values as env vars and call `pr-description.sh` to render the PR body.
 
    Pass the resulting PR body to `open-draft-pr.sh`.
 
@@ -97,15 +97,15 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 11. **Watch merge queue** (only when `MERGE_QUEUE_ENABLED=true` — Primary Agent monitors via `watch-merge-queue.sh`). Resolve conflicts if notified (see [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md)).
 
 12. **Close tracker issue** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
-    - If `ISSUE_TRACKING_SKILL` is set (non-empty): spawn the named skill via the Agent tool with the following prompt:
+    - If `ISSUE_TRACKING_PROMPT` is set (non-empty): spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `ISSUE_TRACKING_PROMPT` as the task instructions, with the following context appended:
       ```
       operation: close_issue
       task_id: <real tracker ID from the plan>
       task_title: <task title>
       pr_url: <merged PR URL>
       ```
-      The skill closes and links the issue in the tracker and returns a confirmation string.
-    - If `ISSUE_TRACKING_SKILL` is empty: close the issue and link the merged PR URL using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
+      The sub-agent closes and links the issue in the tracker and returns a confirmation string.
+    - If `ISSUE_TRACKING_PROMPT` is empty: close the issue and link the merged PR URL using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
     - Report the outcome to the Primary Agent.
 
 ## Pre-PR Checklist

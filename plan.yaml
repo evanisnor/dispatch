@@ -3425,3 +3425,15 @@ tasks:
       Update all skill files to remove save-plan.sh/load-plan.sh references and add
       structure-awareness. Updates: planning-tasks/SKILL.md, orchestrating-agents/SKILL.md,
       executing-tasks/SKILL.md, planning-tasks/ISSUE_TRACKING.md.
+  - id: 69
+    name: delegate-prompts
+    status: done
+    depends_on: []
+    description: >
+      Replace delegate *_skill config keys with *_prompt keys project-wide.
+      Rename pr_description_skill, verification_skill, issue_tracking_skill,
+      and code_review_skill (in settings.yaml, .dispatch.example.yaml, config.sh)
+      to *_prompt equivalents. Update all skill files and README to use the new
+      env var names. Also fix missing CODE_REVIEW_SKILL export in config.sh.
+      Spawn behavior changes from subagent_type:<skill-name> to general-purpose
+      agent with the prompt text as instructions.

@@ -20,8 +20,8 @@ set -euo pipefail
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_SCRIPT_DIR}/../../../scripts/config.sh"
 
-if [[ -n "${PR_DESCRIPTION_SKILL:-}" ]]; then
-  echo "Error: pr.description_skill is configured — invoke that skill instead of pr-description.sh." >&2
+if [[ -n "${PR_DESCRIPTION_PROMPT:-}" ]]; then
+  echo "Error: pr.description_prompt is configured — spawn a sub-agent with that prompt instead of calling pr-description.sh." >&2
   exit 1
 fi
 

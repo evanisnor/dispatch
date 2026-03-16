@@ -92,8 +92,8 @@ ISSUE_TRACKING_TOOL="$(_cfg '.issue_tracking.tool' '.defaults.issue_tracking_too
 export ISSUE_TRACKING_READ_ONLY
 ISSUE_TRACKING_READ_ONLY="$(_cfg '.issue_tracking.read_only' '.defaults.issue_tracking_read_only // ""' 'false')"
 
-export ISSUE_TRACKING_SKILL
-ISSUE_TRACKING_SKILL="$(_cfg '.issue_tracking.skill' '.defaults.issue_tracking_skill' '')"
+export ISSUE_TRACKING_PROMPT
+ISSUE_TRACKING_PROMPT="$(_cfg '.issue_tracking.prompt' '.defaults.issue_tracking_prompt' '')"
 
 # ALLOWED_DOMAINS as a bash array
 _domains_raw="$(_cfg_array '.sandbox.network.allowed_domains' '.defaults.allowed_domains' $'github.com\napi.github.com\nregistry.npmjs.org')"
@@ -120,8 +120,8 @@ fi
 export PR_TEMPLATE_PATH
 PR_TEMPLATE_PATH="$(_expand_path "$(_cfg '.pr.template_path' '.defaults.pr_template_path' '')")"
 
-export PR_DESCRIPTION_SKILL
-PR_DESCRIPTION_SKILL="$(_cfg '.pr.description_skill' '.defaults.pr_description_skill' '')"
+export PR_DESCRIPTION_PROMPT
+PR_DESCRIPTION_PROMPT="$(_cfg '.pr.description_prompt' '.defaults.pr_description_prompt' '')"
 
 export VERIFICATION_MANUAL_GATE
 VERIFICATION_MANUAL_GATE="$(_cfg '.verification.manual_gate' '.defaults.verification_manual_gate' 'false')"
@@ -129,8 +129,11 @@ VERIFICATION_MANUAL_GATE="$(_cfg '.verification.manual_gate' '.defaults.verifica
 export VERIFICATION_STARTUP_COMMAND
 VERIFICATION_STARTUP_COMMAND="$(_cfg '.verification.startup_command' '.defaults.verification_startup_command' '')"
 
-export VERIFICATION_SKILL
-VERIFICATION_SKILL="$(_cfg '.verification.skill' '.defaults.verification_skill' '')"
+export VERIFICATION_PROMPT
+VERIFICATION_PROMPT="$(_cfg '.verification.prompt' '.defaults.verification_prompt' '')"
+
+export CODE_REVIEW_PROMPT
+CODE_REVIEW_PROMPT="$(_cfg '.code_review.prompt' '.defaults.code_review_prompt' '')"
 
 # Helper: check whether the plan repo has a remote named 'origin'
 _has_remote() {
