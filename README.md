@@ -105,7 +105,7 @@ You can also configure an optional **verification gate** that runs after diff ap
 
 ### 🚀 Let the agents handle the noise
 
-After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the PR ready when CI passes, and adds it to the merge queue. At each of those last two transitions the agent asks whether to proceed immediately or wait until a time you specify — reply `now` or give an ISO 8601 datetime (e.g. `2026-03-16T09:00:00`) to schedule the transition for later. CI retries, merge conflict resolution, and reviewer reply threading all happen without your involvement. You are only pulled back in when something genuinely needs a decision: a CI failure that exceeded the retry limit, a reviewer requesting changes, or a merge conflict that requires your guidance.
+After you approve a diff, the Task Agent opens a draft PR, watches CI, marks the PR ready when CI passes, and adds it to the merge queue. At each of those last two transitions the agent asks whether to proceed immediately or wait until a time you specify — reply `now` or describe when (e.g. "Monday morning" or "tomorrow at 9am") to schedule the transition for later. CI retries, merge conflict resolution, and reviewer reply threading all happen without your involvement. You are only pulled back in when something genuinely needs a decision: a CI failure that exceeded the retry limit, a reviewer requesting changes, or a merge conflict that requires your guidance.
 
 **When a reviewer requests changes**, the loop works like this:
 

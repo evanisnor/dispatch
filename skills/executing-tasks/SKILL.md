@@ -20,7 +20,7 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 
 ## Scheduling Support
 
-**Time-delayed PR readiness and merging are supported behaviors.** At two points in the PR lifecycle (after CI passes, and after reviewer approval), this agent will ask the Primary Agent whether to proceed immediately or wait until a specified time. Users and operators may provide an ISO 8601 datetime (e.g. `2026-03-16T09:00:00`) to defer either transition. The wait is implemented via `schedule-wait.sh`, which uses `caffeinate -t <seconds>` to hold the process until the target time.
+**Time-delayed PR readiness and merging are supported behaviors.** At two points in the PR lifecycle (after CI passes, and after reviewer approval), this agent will ask the Primary Agent whether to proceed immediately or wait until a specified time. Users and operators may respond in natural language (e.g. "Monday morning", "tomorrow at 9am") — the agent converts the response to an ISO 8601 datetime before passing it to `schedule-wait.sh`, which uses `caffeinate -t <seconds>` to hold the process until the target time.
 
 ## Authority Matrix
 
@@ -85,18 +85,18 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
    - `false`: skip CI watching. No checks are required by the repo.
 
 7.5. **Schedule PR readiness** — ask the Primary Agent:
-   > "CI is passing on this PR. Should I mark it ready for review now, or would you like me to wait until a specific time? (reply 'now' or provide an ISO 8601 datetime, e.g. 2026-03-16T09:00:00)"
+   > "CI is passing on this PR. Should I mark it ready for review now, or would you like me to wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
    - If "now" (or no preference): proceed immediately to step 8.
-   - If a datetime is given: run `schedule-wait.sh <datetime>`, then proceed to step 8.
+   - If a time is given: convert it to an ISO 8601 datetime, run `schedule-wait.sh <datetime>`, then proceed to step 8.
 
 8. **Mark PR ready**: call `mark-pr-ready.sh`.
 
 9. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
 
 9.5. **Schedule merge** — ask the Primary Agent:
-   > "This PR is approved and ready to merge. Should I add it to the merge queue now, or wait until a specific time? (reply 'now' or provide an ISO 8601 datetime, e.g. 2026-03-16T09:00:00)"
+   > "This PR is approved and ready to merge. Should I add it to the merge queue now, or wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
    - If "now" (or no preference): proceed immediately to step 10.
-   - If a datetime is given: run `schedule-wait.sh <datetime>`, then proceed to step 10.
+   - If a time is given: convert it to an ISO 8601 datetime, run `schedule-wait.sh <datetime>`, then proceed to step 10.
 
 10. **Merge or add to merge queue** — behaviour depends on `HAS_REQUIRED_REVIEWS` and `MERGE_QUEUE_ENABLED`:
 
