@@ -5117,3 +5117,17 @@ tasks:
       before remote diffs, and add open-review-pane.sh and close-pane.sh to
       CODE_REVIEW.md Script locations note.
 
+  - id: 101
+    name: immediate-pr-url-notifications
+    status: done
+    depends_on: []
+    description: >
+      Add immediate PR URL notification when a Task Agent opens a draft PR.
+      New step 5.5 in executing-tasks/SKILL.md records pr_url in plan and
+      notifies Primary Agent immediately. Add PR Link Rule to PR_MONITORING.md
+      requiring all human-facing notifications to include PR URLs. Update
+      PR_MONITORING.md step 1 to announce PRs immediately, CI escalation format
+      and liveness check notifications to include PR links. Add Hard Constraint
+      bullet to orchestrating-agents/SKILL.md referencing the PR Link Rule.
+      Update steps 7.5 and 9.5 messages to include PR URL.
+

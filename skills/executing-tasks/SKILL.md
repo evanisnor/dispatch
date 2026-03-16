@@ -81,6 +81,18 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
 
    Pass the resulting PR body to `open-draft-pr.sh`.
 
+5.5. **Record and report the PR.** After `open-draft-pr.sh` returns the PR URL:
+
+   a. Extract the PR number from the URL (the trailing path segment).
+
+   b. Update the plan YAML — patch `pr_url` in-place:
+      ```bash
+      yq e -i "($TASKS_PATH[] | select(.id == \"<task-id>\")).pr_url = \"<pr-url>\"" <plan-path>
+      # Commit per PLAN_STORAGE.md write-with-lock pattern
+      ```
+
+   c. Immediately notify the Primary Agent: "Draft PR opened for task `<task-id>`: <pr-url>"
+
 6. **Probe the repo** by sourcing `probe-repo.sh`. This exports `MERGE_QUEUE_ENABLED` and `HAS_REQUIRED_CHECKS` for use in the steps below.
 
 7. **Watch CI** — behaviour depends on `HAS_REQUIRED_CHECKS`:
@@ -88,7 +100,7 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
    - `false`: skip CI watching. No checks are required by the repo.
 
 7.5. **Schedule PR readiness** — ask the Primary Agent:
-   > "CI is passing on this PR. Should I mark it ready for review now, or would you like me to wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
+   > "CI is passing on [#N](<pr-url>) (task `<task-id>`). Should I mark it ready for review now, or would you like me to wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
    - If "now" (or no preference): proceed immediately to step 8.
    - If a time is given: convert it to an ISO 8601 datetime, run `schedule-wait.sh <datetime>`, then proceed to step 8.
 
@@ -97,7 +109,7 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
 9. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
 
 9.5. **Schedule merge** — ask the Primary Agent:
-   > "This PR is approved and ready to merge. Should I add it to the merge queue now, or wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
+   > "[#N](<pr-url>) (task `<task-id>`) is approved and ready to merge. Should I add it to the merge queue now, or wait until a specific time? (reply 'now' or describe when, e.g. 'Monday morning' or 'tomorrow at 9am')"
    - If "now" (or no preference): proceed immediately to step 10.
    - If a time is given: convert it to an ISO 8601 datetime, run `schedule-wait.sh <datetime>`, then proceed to step 10.
 

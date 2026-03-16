@@ -11,6 +11,10 @@ After a Task Agent opens a PR, the Orchestrating Agent monitors it through to me
 
 Both scripts read `POLLING_TIMEOUT_MINUTES` from `config.sh`, persist state between invocations via state files, and emit **state-change events only** — never full API response payloads.
 
+### PR Link Rule
+
+All human-facing notifications about a task with a known `pr_url` must include the PR as a clickable link. Use the format `[#N — <title>](<pr-url>)` (or `[#N](<pr-url>)` if the title is unavailable). Never omit the PR link from a human notification when one is known.
+
 ## Retry and Timeout Limits
 
 All limits are read from `.dispatch.json` → `defaults.*`, falling back to `settings.json` defaults.
@@ -25,9 +29,14 @@ Per-epic overrides in `epic.config.*` take precedence over these defaults.
 
 ## PR and CI Monitoring
 
-1. After a Task Agent opens a PR, record the PR URL in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
+1. When a Task Agent reports a newly opened PR, immediately tell the human:
+   > Draft PR opened: [#N — <title>](<pr-url>) for task `<task-id>`
+   If `pr_url` is not already recorded in the plan (e.g., the Task Agent crashed before writing it), record it using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 2. On each activity poll cycle, call `check-pr-status.sh <pr-url>`.
-3. On **CI failure** (exit 2): notify the Task Agent to begin the CI fix loop (see `executing-tasks/CI_FEEDBACK.md`). Track the attempt count against `MAX_CI_FIX_ATTEMPTS`. On breach, escalate to human.
+3. On **CI failure** (exit 2): notify the Task Agent to begin the CI fix loop (see `executing-tasks/CI_FEEDBACK.md`). Track the attempt count against `MAX_CI_FIX_ATTEMPTS`. On breach, escalate to human:
+   > CI fix attempts exhausted for [#N — <title>](<pr-url>) (task `<task-id>`). <failure-summary>. What would you like to do?
+   > - **Retry** — reset the counter and let the Task Agent try again.
+   > - **Abandon** — cancel the task and flag dependents blocked.
 4. On **changes requested** (exit 1): begin the reviewer-requested change review loop in [REVIEW.md](REVIEW.md).
 5. On **approved + CI passing** (exit 0): notify the Task Agent to call `add-to-merge-queue.sh`.
 6. On **still in progress** (exit 4): no action. If a `TIMEOUT` line appears in stdout, escalate to human with the PR URL and elapsed time.
@@ -84,7 +93,7 @@ On each activity poll cycle, check liveness for every `in_progress` Task Agent u
 
 Agent has stopped or errored. Immediately ask the human:
 
-> Task Agent `<agent_id>` (task `<task_id>`) has stopped — last activity: <timestamp>. What would you like to do?
+> Task Agent `<agent_id>` (task `<task_id>`) has stopped — last activity: <timestamp>. PR: [#N](<pr-url>) (or "no PR" if `pr_url` is not set). What would you like to do?
 > - **Restart** — respawn the agent (up to `MAX_AGENT_RESTARTS` allowed).
 > - **Abandon** — cancel the task and flag dependents blocked.
 
@@ -97,7 +106,7 @@ On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
 
 If `TaskGet` shows the agent is running but the last activity timestamp from the plan is older than `POLLING_TIMEOUT_MINUTES`, notify the human:
 
-> Agent `<agent_id>` for task `<task_id>` appears stalled — no activity for N minutes. What would you like to do?
+> Agent `<agent_id>` for task `<task_id>` appears stalled — no activity for N minutes. PR: [#N](<pr-url>) (or "no PR" if `pr_url` is not set). What would you like to do?
 > - **Wait** — I'll check again at the next polling cycle.
 > - **Restart** — respawn the agent (up to `MAX_AGENT_RESTARTS` allowed).
 > - **Abandon** — cancel the task and flag dependents blocked.
