@@ -35,6 +35,10 @@ verification:
 code_review:
   prompt: ""  # optional: prompt (or "/skill-name") for preliminary PR analysis
 
+knowledge:
+  repo_path: ""  # optional: path to knowledge repo; defaults to plan_storage.repo_path
+  max_load_entries: 30  # cap on entries loaded per session
+
 defaults:
   max_ci_fix_attempts: 3
   max_agent_restarts: 2

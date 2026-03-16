@@ -3462,3 +3462,41 @@ tasks:
       Gate 2 before "Merge or add to queue" (step 10): same pattern for merge
       timing. Add a prominent note at the top of the scheduling section that
       time-delayed PR readiness and merging are supported behaviors.
+
+  - id: 72
+    name: knowledge-schema
+    status: in_progress
+    depends_on: []
+    description: >
+      Create skills/knowledge/KNOWLEDGE.md with entry schema and usage rules.
+      Add knowledge.repo_path and knowledge.max_load_entries to settings.yaml
+      and .dispatch.example.yaml. Export KNOWLEDGE_REPO (defaults to PLAN_REPO)
+      and KNOWLEDGE_MAX_LOAD_ENTRIES in scripts/config.sh.
+
+  - id: 73
+    name: knowledge-scripts
+    status: pending
+    depends_on: [72]
+    description: >
+      Create scripts/load-knowledge.sh and scripts/append-knowledge.sh.
+      load-knowledge.sh reads and filters knowledge.yaml with --category,
+      --tags, --limit flags. append-knowledge.sh validates and appends a
+      single entry using the git write-with-lock pattern.
+
+  - id: 74
+    name: knowledge-planning-integration
+    status: pending
+    depends_on: [73]
+    description: >
+      Add knowledge read step (0.5) and write step (8.5) to
+      skills/planning-tasks/SKILL.md. Step 0.5 loads planning entries before
+      decomposition; step 8.5 records lessons after plan approval.
+
+  - id: 75
+    name: knowledge-task-integration
+    status: pending
+    depends_on: [73]
+    description: >
+      Add knowledge read step (1.5) and write step (13.5) to
+      skills/executing-tasks/SKILL.md. Add knowledge consultation and
+      recording to skills/executing-tasks/CI_FEEDBACK.md.

@@ -135,6 +135,18 @@ VERIFICATION_PROMPT="$(_cfg '.verification.prompt' '.defaults.verification_promp
 export CODE_REVIEW_PROMPT
 CODE_REVIEW_PROMPT="$(_cfg '.code_review.prompt' '.defaults.code_review_prompt' '')"
 
+# KNOWLEDGE_REPO defaults to PLAN_REPO when knowledge.repo_path is empty
+_knowledge_repo_raw="$(_cfg '.knowledge.repo_path' '.knowledge.repo_path // ""' '')"
+export KNOWLEDGE_REPO
+if [[ -n "${_knowledge_repo_raw}" ]]; then
+  KNOWLEDGE_REPO="$(_expand_path "${_knowledge_repo_raw}")"
+else
+  KNOWLEDGE_REPO="${PLAN_REPO}"
+fi
+
+export KNOWLEDGE_MAX_LOAD_ENTRIES
+KNOWLEDGE_MAX_LOAD_ENTRIES="$(_cfg '.knowledge.max_load_entries' '.knowledge.max_load_entries // ""' '30')"
+
 # Helper: check whether the plan repo has a remote named 'origin'
 _has_remote() {
   git -C "${PLAN_REPO}" remote get-url origin &>/dev/null
