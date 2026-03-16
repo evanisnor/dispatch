@@ -5,6 +5,7 @@ git:
   protected_branches:
     - main
     - master
+  main_update_strategy: rebase  # rebase (default) or merge-ff-only
 
 issue_tracking:
   tool: jira

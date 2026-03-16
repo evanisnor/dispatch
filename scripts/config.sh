@@ -109,6 +109,14 @@ MAX_AGENT_RESTARTS="$(_cfg '.defaults.max_agent_restarts' '.defaults.max_agent_r
 export POLLING_TIMEOUT_MINUTES
 POLLING_TIMEOUT_MINUTES="$(_cfg '.defaults.polling_timeout_minutes' '.defaults.polling_timeout_minutes' '60')"
 
+export MAIN_UPDATE_STRATEGY
+MAIN_UPDATE_STRATEGY="$(_cfg '.git.main_update_strategy' '.defaults.main_update_strategy' 'rebase')"
+
+# Enforce valid values
+if [[ "${MAIN_UPDATE_STRATEGY}" != "rebase" && "${MAIN_UPDATE_STRATEGY}" != "merge-ff-only" ]]; then
+  MAIN_UPDATE_STRATEGY="rebase"
+fi
+
 export DIFF_MODE
 DIFF_MODE="$(_cfg '.diff.mode' '.defaults.diff_mode' 'split')"
 

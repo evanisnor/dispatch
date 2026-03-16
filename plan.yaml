@@ -4069,7 +4069,7 @@ tasks:
 
   - id: 76
     name: update-main-script
-    status: pending
+    status: done
     depends_on: []
     description: >
       Replace rebase-worktrees.sh with update-main.sh. The new script only updates local main

@@ -5,6 +5,7 @@ knowledge:
   max_load_entries: 30
 
 defaults:
+  main_update_strategy: rebase
   max_ci_fix_attempts: 3
   max_agent_restarts: 2
   polling_timeout_minutes: 60
