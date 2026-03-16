@@ -42,11 +42,11 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 
 1. **Mark task in progress** before starting any implementation work.
 
-   a. Update the plan YAML — use the load → patch → save pattern:
+   a. Update the plan YAML — discover `TASKS_PATH` from plan structure (see [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md)), then patch in-place:
       ```bash
-      load-plan.sh <plan-path> \
-        | yq e '(.tasks[] | select(.id == "<task-id>")).status = "in_progress"' - \
-        | save-plan.sh <plan-path>
+      # Discover TASKS_PATH from plan structure (see PLAN_STORAGE.md)
+      yq e -i "($TASKS_PATH[] | select(.id == \"<task-id>\")).status = \"in_progress\"" <plan-path>
+      # Commit per PLAN_STORAGE.md write-with-lock pattern
       ```
 
    b. If `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
