@@ -110,6 +110,13 @@ Triggered when a PR reviewer requests changes after the PR is open.
    a. Call `open-review-pane.sh "review-update-<task-id>" "<worktree-path>"`. Store the returned window ID.
    b. Present the updated diff to the human for confirmation.
    c. Call `close-pane.sh "<window-id>"` after human confirms.
+   d. **Propagate to stacked worktrees (if any):**
+      1. Check the plan for tasks where `stacked: true` and `base_branch` matches this task's `branch`.
+      2. If none: skip.
+      3. If any: call `scripts/rebase-stacked-worktrees.sh <plan-file> <this-task-branch>`.
+      4. **On success (exit 0):** notify each rebased Task Agent: "Task `<parent-task-id>` received reviewer-requested changes. Your worktree has been rebased onto the updated branch."
+      5. **On conflict (exit 1, outputs `CONFLICT=<task-id> WORKTREE=<path>`):** notify the conflicting Task Agent to resolve the conflict in its worktree, follow the Merge Conflict Review Loop below, then re-run `scripts/rebase-stacked-worktrees.sh <plan-file> <this-task-branch>` after the human approves the push.
+      6. Resume the Reviewer-Requested Change Review Loop for this task from step 1.
 
 ## Merge Conflict Review Loop
 

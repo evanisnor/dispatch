@@ -17,9 +17,9 @@ Always respond with the table. Do not summarise in prose instead of or in additi
 ## Status Table Template
 
 ```
-| Task | Title | Status | Activity | PR | Branch |
-|------|-------|--------|----------|----|--------|
-| {id} | {title} | {status} | {activity} | {pr} | {branch} |
+| Task | Title | Status | Activity | PR | Branch | Stack |
+|------|-------|--------|----------|----|--------|-------|
+| {id} | {title} | {status} | {activity} | {pr} | {branch} | {stack} |
 ```
 
 **Columns:**
@@ -32,6 +32,13 @@ Always respond with the table. Do not summarise in prose instead of or in additi
 | Activity | Derived from live state | See values below |
 | PR | `task.pr_url` — render as `#N` linked if available, `—` if none | |
 | Branch | `task.branch` — render as code, `—` if not yet created | |
+| Stack | Derived from `stacked` and `base_branch` fields | See rendering rules below |
+
+**Stack column rendering rules:**
+
+- If `stacked: true`: render as `on T-<parent-id>` (find parent by matching this task's `base_branch` against other tasks' `branch` fields).
+- If the task has one or more active stacked dependents (other tasks where `base_branch` matches this task's `branch`): render as `← T-<child-id>` (comma-separated if multiple).
+- Otherwise: `—`
 
 ## Status Values
 
@@ -64,6 +71,8 @@ Derived by the Orchestrating Agent from plan state and live PR/CI context. Use t
 | `merged` | PR merged successfully |
 | `blocked on <task-id>` | Waiting for a dependency that is not yet done |
 | `failed — escalation required` | CI fix limit exceeded or unrecoverable error |
+| `stacking offered` | Diff approved; Orchestrating Agent has asked human about stacking, awaiting answer |
+| `stacked — implementing` | Task is stacked (`stacked: true`); Task Agent is actively implementing |
 
 ## Pending Reviews Table
 

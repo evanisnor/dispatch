@@ -37,6 +37,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Approve a diff and open a PR | **Requires human approval first** |
 | Call `approve-pr.sh` (approve incoming review) | **Requires human approval first** |
 | Abandon a task | **Requires human approval first** |
+| Spawn a stacked Task Agent + initial rebase | **Requires human approval first** |
 
 ## High-Level Workflow
 
@@ -71,6 +72,23 @@ When a Task Agent requests approval to open a PR, call `open-review-pane.sh` to 
 
 **Never present diffs inline or use your built-in file-change approval flow.** The tmux window opened by `open-review-pane.sh` is the diff review. If you are not running inside tmux, abort and notify the human before proceeding.
 
+### 3.5 Stacking Prompt
+
+After the Verification Gate completes (REVIEW.md § Verification Gate) and before notifying the Task Agent to open its PR:
+
+1. Identify tasks in the plan that have `depends_on` containing this task's ID and `status: pending`.
+2. If any exist, ask the human (one dependent at a time; stop after the first "no"):
+   > "Task `<dep-id>` (`<dep-name>`) depends directly on this one. Would you like me to start implementing it now as a stacked worktree on top of `<branch>`? B's changes will be based on A's — I'll rebase them automatically as A evolves."
+3. **On yes:**
+   a. Tell the human: "I'll spawn a Task Agent for `<dep-id>` in a new worktree and immediately rebase it onto `<branch>`. While `<task-id>` is in review, `<dep-id>` will be implemented in parallel. If reviewers request changes to `<task-id>`, I'll rebase `<dep-id>` automatically and ask you to review any conflicts."
+   b. Spawn a Task Agent for `<dep-id>` using the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`. Include `base_branch: <branch>` in the spawn prompt so the Task Agent is aware it is stacked.
+   c. After the Agent tool returns the worktree path: immediately run `git -C <worktree-path> rebase <branch>` to stack the fresh worktree onto the parent's branch. (Safe: no commits exist yet.)
+   d. Update the plan: set `base_branch: <branch>`, `stacked: true`, `agent_id`, `worktree`, and `branch` on `<dep-id>` using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) write-with-lock.
+4. **On no:** proceed normally (notify the original Task Agent to open draft PR).
+5. If there are multiple pending dependents, offer them one at a time; stop after the first "no".
+
+See [STACKED_WORKTREES.md](STACKED_WORKTREES.md) for full lifecycle documentation.
+
 ### 4. PR and CI Monitoring
 
 After a PR is opened, use `watch-pr-status.sh` and `watch-merge-queue.sh` as described in [PR_MONITORING.md](PR_MONITORING.md).
@@ -82,6 +100,7 @@ After a PR merges:
 2. Call `update-main.sh` to bring local main up to date.
 3. Mark the completed task `done` in the plan using `yq e -i` with `TASKS_PATH`, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
 4. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
+5. Follow the stacked worktree post-merge rebase procedure in [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring — Success step 4.5.
 
 ### 6. Completion
 
@@ -197,6 +216,7 @@ Apply the same pattern for any other field update (`agent_id`, `branch`, `worktr
 - **Never push or commit code.** You have no write access to any branch.
 - **Never take over a Task Agent's work.** If a Task Agent cannot complete its task (permissions denied, agent dead, unrecoverable error), escalate to the human — do not implement the task yourself.
 - **Never instruct the Planning Agent to save until the human has approved the plan tmux review.** The plan is only persisted to plan storage after the human approves it in the tmux pane opened by `open-plan-review-pane.sh`.
+- **When spawning a stacked Task Agent, perform the initial `git rebase <base_branch>` on the fresh worktree immediately after the Agent tool returns the worktree path, before the Task Agent begins implementation.**
 - **Never merge PRs without a human-approved diff.** All merges go through the review loop in [REVIEW.md](REVIEW.md).
 - **The verification gate must complete before notifying a Task Agent to open a PR.** If `verification.skill` or `verification.manual_gate` is configured, run the full gate (see [REVIEW.md](REVIEW.md) Verification Gate) after diff approval and before sending the proceed notification.
 - **Inspect structure → patch in-place (`yq e -i`) → commit per [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).** Never reconstruct the full YAML document. Never hardcode a yq path that assumes a specific envelope key.

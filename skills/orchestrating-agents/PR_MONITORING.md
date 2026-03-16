@@ -40,6 +40,16 @@ Once a Task Agent calls `add-to-merge-queue.sh`, call `watch-merge-queue.sh <pr-
 3. Call `update-main.sh` to bring local main up to date.
 4. Unblock dependent tasks: for each task whose `depends_on` are all `done`, set `status: pending`.
 
+**Step 4.5 — Rebase stacked worktrees (if any):**
+1. Check the plan for tasks where `stacked: true` and `base_branch` matches the just-merged task's `branch`.
+2. If none: skip.
+3. If any: call `scripts/rebase-stacked-worktrees.sh <plan-file> <merged-branch>`.
+4. **On success (exit 0):** notify each rebased Task Agent: "Task `<parent-task-id>` has merged into main. Your worktree has been rebased onto main. GitHub will retarget your PR base automatically."
+5. **On conflict (exit 1, outputs `CONFLICT=<task-id> WORKTREE=<path>`):**
+   a. Notify the conflicting Task Agent to resolve the conflict in its worktree.
+   b. Follow the Merge Conflict Review Loop in [REVIEW.md](REVIEW.md).
+   c. After human-approved push, re-run `scripts/rebase-stacked-worktrees.sh <plan-file> <merged-branch>` to continue rebasing the remainder of the stack.
+
 ### Conflicts (exit 1)
 1. Notify the Task Agent to resolve the conflict.
 2. Follow the merge conflict review loop in [REVIEW.md](REVIEW.md) before allowing the Task Agent to push.

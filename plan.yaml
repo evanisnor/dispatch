@@ -4096,3 +4096,59 @@ tasks:
       3 and 4. In REVIEW.md merge conflict review loop: remove "rebase-worktrees.sh or" from
       the conflict notification trigger line, leaving only "watch-merge-queue.sh".
 
+  - id: 78
+    name: stacked-worktrees-doc
+    status: done
+    depends_on: []
+    description: >
+      Create skills/orchestrating-agents/STACKED_WORKTREES.md covering the full stacked
+      worktrees workflow: definition and use case, data model (base_branch and stacked fields),
+      worktree creation via isolation: "worktree" with immediate rebase onto parent's branch,
+      stacking prompt flow (when to offer, what to tell the human), change propagation using
+      rebase-stacked-worktrees.sh, post-merge rebase, conflict handling, cleanup, GitHub PR
+      base auto-update note, and race condition warning.
+
+  - id: 79
+    name: rebase-stacked-worktrees-script
+    status: done
+    depends_on: [78]
+    description: >
+      Create skills/orchestrating-agents/scripts/rebase-stacked-worktrees.sh. Args: plan-file
+      updated-branch. Uses yq to find tasks where stacked == true and base_branch ==
+      updated-branch. For each: fetch origin, rebase onto origin/<updated-branch> (fall back
+      to local ref). On conflict: abort rebase, output CONFLICT=<task-id> WORKTREE=<path>,
+      exit 1. On success: recurse with each rebased task's own branch as updated-branch.
+      Exit 0 when no stacked tasks remain.
+
+  - id: 80
+    name: stacked-worktrees-awareness
+    status: done
+    depends_on: [78]
+    description: >
+      Update skills/orchestrating-agents/SKILL.md: add Section 3.5 (Stacking Prompt) between
+      Diff Review and PR & CI Monitoring sections; add row to Authority Matrix; add Hard
+      Constraint about initial rebase timing; add step 5.5 to Post-Merge Cleanup referencing
+      PR_MONITORING.md step 4.5. Update skills/orchestrating-agents/STATUS.md: add Stack
+      column to status table with rendering rules; add stacking offered and stacked —
+      implementing activity values.
+
+  - id: 81
+    name: stacked-worktrees-post-merge
+    status: done
+    depends_on: [79, 80]
+    description: >
+      Update skills/orchestrating-agents/PR_MONITORING.md: after Merge Queue Monitoring
+      Success step 4, insert step 4.5 to rebase stacked worktrees using
+      rebase-stacked-worktrees.sh, notify rebased Task Agents on success, and handle
+      conflicts via the Merge Conflict Review Loop.
+
+  - id: 82
+    name: stacked-worktrees-change-propagation
+    status: done
+    depends_on: [79, 80]
+    description: >
+      Update skills/orchestrating-agents/REVIEW.md: in the Reviewer-Requested Change Review
+      Loop, after step 5c (close review pane), insert step 5d to propagate changes to stacked
+      worktrees using rebase-stacked-worktrees.sh, notify rebased Task Agents on success,
+      handle conflicts, and resume the review loop.
+
