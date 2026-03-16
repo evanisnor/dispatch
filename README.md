@@ -105,6 +105,31 @@ If `editor.app` is configured, you can also respond with `open editor` during an
 
 You can also configure an optional **verification gate** that runs after diff approval and before the PR opens. When enabled, the Orchestrating Agent opens a tmux window pointed at the task's worktree so you can start the app, exercise the feature, and confirm it behaves correctly — before the PR is visible to reviewers. For projects with automated verification, you can instead delegate to a skill that runs integration tests or deploys to a staging environment and reports back. Both options can be combined, and either can be omitted entirely.
 
+### 🧪 Prototype before committing to a plan
+
+After you approve a plan, the Orchestrating Agent asks how you'd like to proceed:
+
+> "Plan saved. How would you like to proceed?
+> - **Implement** — spawn Task Agents in parallel, one worktree per task, a PR opened for each.
+> - **Prototype** — dispatch a single agent to explore one or more tasks in one worktree.
+>   No PRs are opened. Good for de-risking unfamiliar domains before committing to the full plan."
+
+Choose **Prototype** when the implementation path is unclear, the technology is unfamiliar, or you want to validate assumptions before opening PRs. The Orchestrating Agent asks which tasks to include (one ID, a comma-separated list, or "all"), then spawns a single Prototype Agent in an isolated worktree.
+
+The Prototype Agent:
+1. Consults the knowledge store for relevant prior findings before writing a line of code.
+2. Implements each task exploratorily — trying the most promising approach — and makes one commit per task.
+3. Awaits the verification gate (if configured) before proceeding.
+4. Returns a findings summary: what was tried, what worked and didn't, surprises, and recommendations for the production plan (tasks to split, tasks simpler than expected, new tasks needed).
+
+When the summary comes back, you choose what to do next:
+- **Proceed** — move into normal implementation with the current plan.
+- **Re-plan** — spawn a Planning Agent in amendment mode, with the prototype findings as context.
+- **Discard** — remove the prototype worktree and branch.
+- **Stop** — keep the worktree for further exploration and end the session.
+
+Prototype findings are saved to the knowledge store so future sessions in the same domain can benefit from what was learned.
+
 ### ⚡ Stack dependent tasks during review
 
 After you approve a diff, before the Orchestrating Agent notifies the Task Agent to open its PR, it checks whether any tasks depend directly on the one just approved. If so, it asks:
@@ -181,6 +206,7 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 - **Spawning a Planning Agent** — before any work is decomposed.
 - **Approving the plan** — before anything is saved.
 - **Spawning Task Agents** — before any code is written.
+- **Spawning a Prototype Agent** — before any exploratory implementation begins.
 - **Stacking a dependent Task Agent** — offered after each approved diff; one at a time, opt-in.
 - **Diff review** — before every PR is opened.
 - **Reviewer-requested changes** — before the Task Agent acts on them.
@@ -207,6 +233,7 @@ All external content — PR comments, CI log summaries, reviewer feedback, issue
 | `verification.manual_gate` | `boolean` | `false` | When `true`, opens a tmux window at the task's worktree after diff approval and waits for human confirmation before the PR opens. |
 | `verification.startup_command` | `string` | `""` | Command to run automatically in the verification window (e.g. `"npm run dev"`). Only applies when `verification.manual_gate` is `true`. |
 | `verification.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for automated pre-PR verification. Spawned after diff approval; output is presented to the human before confirmation. Independent of `manual_gate`. |
+| `prototype.auto_push` | `boolean` | `false` | When `true`, the Prototype Agent pushes its branch to origin automatically after completing all commits. When `false` (default), the Orchestrating Agent asks before pushing. |
 | `code_review.prompt` | `string` | `""` | Prompt (or `"/skill-name"`) for preliminary PR analysis. When set, Review Agents spawn a sub-agent with this prompt instead of performing their own analysis. Leave empty to use the built-in behavior. |
 | `sandbox.network.allowed_domains` | `array of strings` | `["github.com", "api.github.com", "registry.npmjs.org"]` | Domains Task Agents are permitted to reach over the network. |
 | `sandbox.filesystem.extra_deny_read` | `array of glob strings` | `[]` | Additional paths to block Task Agents from reading, merged with the hardcoded base deny list. |
