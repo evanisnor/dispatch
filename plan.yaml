@@ -4175,7 +4175,7 @@ tasks:
 
   - id: 84
     name: open-in-editor-script
-    status: todo
+    status: done
     depends_on: [83]
     description: >
       Create skills/orchestrating-agents/scripts/open-in-editor.sh.
