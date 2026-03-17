@@ -12,6 +12,9 @@ WINDOW_NAME="${1:-}"
 WORKTREE_PATH="${2:-}"
 STARTUP_CMD="${3:-}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/tmux-helpers.sh"
+
 if [[ -z "${WINDOW_NAME}" || -z "${WORKTREE_PATH}" ]]; then
   echo "Usage: open-verification-pane.sh <window-name> <worktree-path> [startup-command]" >&2
   exit 1
@@ -29,7 +32,7 @@ if [[ -z "${TMUX:-}" ]]; then
 fi
 
 # Open a new named window in the current session, starting in the worktree directory
-WINDOW_ID="$(tmux new-window -P -F '#{window_id}' -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}")"
+WINDOW_ID="$(tmux_new_window_reliable -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}")"
 
 # Send the startup command if provided
 if [[ -n "${STARTUP_CMD}" ]]; then

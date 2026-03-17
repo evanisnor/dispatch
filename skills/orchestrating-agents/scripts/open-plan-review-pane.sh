@@ -27,6 +27,9 @@ TEMP_PLAN_FILE="${2:-}"
 ORIGINAL_PLAN_FILE="${3:-}"
 MODE="${4:-${DIFF_MODE:-split}}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/tmux-helpers.sh"
+
 if [[ -z "${WINDOW_NAME}" || -z "${TEMP_PLAN_FILE}" ]]; then
   echo "Usage: open-plan-review-pane.sh <window-name> <temp-plan-file> [original-plan-file] [mode]" >&2
   exit 1
@@ -71,7 +74,7 @@ else
 fi
 
 # Open a new named window in the current session
-WINDOW_ID="$(tmux new-window -P -F '#{window_id}' -n "${WINDOW_NAME}" \
+WINDOW_ID="$(tmux_new_window_reliable -n "${WINDOW_NAME}" \
   "bash -c '${DISPLAY_CMD}; printf \"\n${SEPARATOR}\n\"; read -r -p \"When done reviewing, return to Claude to approve or give feedback. Press Enter to close this window.\" _'")"
 
 echo "${WINDOW_ID}"

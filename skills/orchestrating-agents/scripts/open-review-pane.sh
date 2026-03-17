@@ -29,6 +29,9 @@ else
   MODE="${_ARG3:-${DIFF_MODE:-split}}"
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/tmux-helpers.sh"
+
 if [[ -z "${WINDOW_NAME}" || -z "${WORKTREE_PATH}" ]]; then
   echo "Usage: open-review-pane.sh <window-name> <worktree-path> [diff-range-or-mode] [mode]" >&2
   exit 1
@@ -73,7 +76,7 @@ else
 fi
 
 # Open a new named window in the current session
-WINDOW_ID="$(tmux new-window -P -F '#{window_id}' -n "${WINDOW_NAME}" \
+WINDOW_ID="$(tmux_new_window_reliable -n "${WINDOW_NAME}" \
   "${DIFF_CMD}; printf '\n--- end of diff ---\n'; read -r -p 'When done reviewing, return to Claude and approve or request changes. Press Enter to close this window.' _")"
 
 echo "${WINDOW_ID}"

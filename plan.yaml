@@ -5276,3 +5276,15 @@ tasks:
       all notification examples in SKILL.md, PR_MONITORING.md, CODE_REVIEW.md,
       REVIEW.md, and executing-tasks/SKILL.md to embed cards.
 
+  - id: 114
+    name: tmux-race-condition-reliable-window-creation
+    status: done
+    depends_on: []
+    description: >
+      Add a shared tmux_new_window_reliable helper that wraps tmux new-window
+      with post-creation verification and retry (3 attempts, 0.5s pause).
+      Source the helper from open-review-pane.sh, open-plan-review-pane.sh,
+      and open-verification-pane.sh, replacing their direct tmux new-window
+      calls. Fixes silent failures when multiple panes are opened in quick
+      succession.
+
