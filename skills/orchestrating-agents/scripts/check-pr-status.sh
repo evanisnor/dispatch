@@ -45,23 +45,37 @@ STATE="$(printf '%s\n' "${RESULT}" | jq -r '.state')"
 REVIEW_DECISION="$(printf '%s\n' "${RESULT}" | jq -r '.reviewDecision // "NONE"')"
 
 # Summarise CI checks: count by conclusion, never emit raw log text
+# StatusContext objects have .state (not .conclusion/.status), so normalise both types
 CI_SUMMARY="$(printf '%s\n' "${RESULT}" | jq -r '
   .statusCheckRollup
+  | map(. + {_label: (
+      if .conclusion != null then .conclusion
+      elif .status != null then .status
+      elif .state != null then .state
+      else "UNKNOWN"
+      end
+    )})
   | if length == 0 then "no-checks"
     else
-      group_by(.conclusion // .status)
-      | map("\(.[0].conclusion // .[0].status):\(length)")
+      group_by(._label)
+      | map("\(.[0]._label):\(length)")
       | join(" ")
     end
 ' 2>/dev/null || echo "unknown")"
 
 CI_FAILURES="$(printf '%s\n' "${RESULT}" | jq -r '
-  [.statusCheckRollup[] | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")]
+  [.statusCheckRollup[] | select(
+    .conclusion == "FAILURE" or .conclusion == "TIMED_OUT"
+    or .state == "FAILURE" or .state == "ERROR"
+  )]
   | length
 ' 2>/dev/null || echo "0")"
 
 CI_PENDING="$(printf '%s\n' "${RESULT}" | jq -r '
-  [.statusCheckRollup[] | select(.conclusion == null and .status != "COMPLETED")]
+  [.statusCheckRollup[] | select(
+    (.conclusion == null and .status != null and .status != "COMPLETED")
+    or (.state == "PENDING" or .state == "EXPECTED")
+  )]
   | length
 ' 2>/dev/null || echo "0")"
 

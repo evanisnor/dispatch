@@ -5227,3 +5227,15 @@ tasks:
       Strengthen Hard Constraints to prohibit Edit/Write/Bash on worktree
       directories and mandate SendMessage.
 
+  - id: 110
+    name: fix-ci-status-reporting
+    status: done
+    depends_on: [30]
+    description: >
+      Fix check-pr-status.sh CI summary reporting null labels for StatusContext
+      objects from GitHub's statusCheckRollup. StatusContext objects have .state
+      (PENDING/SUCCESS/FAILURE/ERROR) but no .conclusion or .status fields.
+      Normalize both CheckRun and StatusContext into a single label before
+      grouping in CI_SUMMARY, and update CI_FAILURES and CI_PENDING selectors
+      to also check .state for StatusContext compatibility.
+
