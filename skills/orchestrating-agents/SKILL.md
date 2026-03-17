@@ -162,6 +162,7 @@ After a PR merges:
 1. Call `remove-worktree.sh <worktree-path>`.
 2. Call `update-main.sh` to bring local main up to date.
 3. Mark the completed task `done` in the plan using `yq e -i` with `TASKS_PATH`, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
+3.5. **Knowledge verification.** Check whether the Task Agent reported recording knowledge entries during its session. If the agent's output does not mention `append-knowledge.sh` or knowledge recording, log a warning: "Task `<task-id>`: no knowledge entries recorded."
 4. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
 5. Follow the stacked worktree post-merge rebase procedure in [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring — Success step 4.5.
 
@@ -170,6 +171,7 @@ After a PR merges:
 After marking the last task in the plan as `done`, `cancelled`, or `failed`:
 
 1. Render the final status table (per [STATUS.md](STATUS.md)) showing all tasks.
+1.5. **Knowledge gap summary.** Count tasks that completed without any recorded knowledge entries (based on warnings logged in step 3.5 of Post-Merge Cleanup). If any gaps exist, include a summary line: "N of M task(s) completed without recording knowledge entries."
 2. Print a completion summary:
    - Total tasks: completed / cancelled / failed counts.
    - List of merged PR URLs (from `task.result.pr_url` for each `done` task).

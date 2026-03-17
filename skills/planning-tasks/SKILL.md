@@ -47,7 +47,11 @@ Run `load-knowledge.sh --category planning --limit 20`. If entries are returned,
 8. If issue tracking is configured, perform issue tracking sync (see [ISSUE_TRACKING.md](ISSUE_TRACKING.md)).
 
 **8.5. Record planning lessons.**
-If this was a non-trivial plan (≥3 tasks) and any notable decisions were made (dependency conflicts avoided, scope adjustments, planning failures), append up to 3 knowledge entries via `append-knowledge.sh`. Use category `planning`. Include the plan_id and relevant task_ids in `source`. Only record generalizable lessons, not project-specific implementation details.
+Knowledge recording is **not optional** — always record at least one entry, at most three. Each entry must include `context` (brief situation description) and `lesson` (actionable principle for future agents). Use category `planning`. Include the plan_id and relevant task_ids in `source`. Only record generalizable lessons, not project-specific implementation details.
+
+Use the following to guide what to record: dependency conflicts avoided, scope adjustments, planning failures, decomposition decisions that worked well, or patterns that made the plan cleaner. If nothing notable occurred, record what went smoothly and why.
+
+Append each entry via `append-knowledge.sh`.
 
 10. **Exit.**
 

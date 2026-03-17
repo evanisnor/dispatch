@@ -18,6 +18,7 @@ source "${_SCRIPT_DIR}/config.sh"
 # --- Guard: no-op if KNOWLEDGE_REPO is unset or empty ---
 
 if [[ -z "${KNOWLEDGE_REPO:-}" ]]; then
+  echo "append-knowledge.sh: KNOWLEDGE_REPO is not configured — entry was not recorded" >&2
   exit 0
 fi
 

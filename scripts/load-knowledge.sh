@@ -48,6 +48,7 @@ done
 # --- Guard: no-op if KNOWLEDGE_REPO is unset or empty ---
 
 if [[ -z "${KNOWLEDGE_REPO:-}" ]]; then
+  echo "load-knowledge.sh: KNOWLEDGE_REPO is not configured — no entries loaded" >&2
   exit 0
 fi
 

@@ -67,3 +67,5 @@ The file lives at `$KNOWLEDGE_REPO/knowledge.yaml`. `KNOWLEDGE_REPO` defaults to
 | `conflict` | Merge conflict causes and resolution strategies |
 | `pr-review` | Patterns in reviewer feedback and change requests |
 | `general` | Non-obvious implementation approaches not covered above |
+| `prototype` | Prototype exploration findings and de-risking outcomes |
+| `implementation` | Domain findings and failed approaches from task implementation |

@@ -5168,3 +5168,14 @@ tasks:
       implementation. Update spawn-prototype-agent.sh assignment label and closing
       instruction. Add "implementation" to valid_categories in append-knowledge.sh.
 
+  - id: 105
+    name: fix-knowledge-recording
+    status: done
+    depends_on: [104]
+    description: >
+      Fix agents not contributing to knowledge store. Fix schema mismatch in
+      PROTOTYPE.md (summary/detail → context/lesson), add stderr warnings to
+      knowledge scripts when KNOWLEDGE_REPO is empty, make knowledge recording
+      mandatory in Task Agent and Planning Agent, add knowledge oversight to
+      Orchestrating Agent, and update KNOWLEDGE.md categories table.
+

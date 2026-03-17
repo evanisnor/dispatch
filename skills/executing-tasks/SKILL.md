@@ -152,13 +152,16 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
     - Report the outcome to the Primary Agent.
 
 **13.5. Record task lessons.**
-Append up to 3 knowledge entries via `append-knowledge.sh` if any of the following occurred during this task:
+Knowledge recording is **not optional** — always record at least one entry, at most three. Each entry must include `context` (brief situation description) and `lesson` (actionable principle for future agents), plus `plan_id` and `task_id` in `source`.
+
+Use the following to guide what to record:
 - CI required multiple fix attempts → category `ci`; summarize the failure pattern and what fixed it.
 - A merge conflict was resolved → category `conflict`; summarize the cause and resolution strategy.
 - Reviewer-requested changes were substantial → category `pr-review`; summarize the feedback pattern.
 - Implementation required a non-obvious approach → category `general`.
+- If none of the above occurred, record what went smoothly and why — category `general`.
 
-Include `plan_id` and `task_id` in `source` for each entry.
+Append each entry via `append-knowledge.sh`.
 
 ## Pre-PR Checklist
 

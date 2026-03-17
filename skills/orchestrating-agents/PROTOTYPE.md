@@ -111,8 +111,8 @@ category: implementation
 tags:
   - <tag1>
   - <tag2>
-summary: <one-line finding>
-detail: <expanded context, approach details, gotchas>
+context: <brief situation description>
+lesson: <actionable principle for future agents>
 source:
   plan_id: <plan-path>
   task_ids: [<id1>, <id2>]
