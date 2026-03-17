@@ -96,6 +96,23 @@ dispatch/
 - Sandbox `denyRead` must hardcode blocks on `~/.ssh/`, `~/.gnupg/`, `**/.env`, `**/*.pem`, `**/*.key`. `sandbox.filesystem.extra_deny_read` in project config extends this list.
 - Task Agents require Write/Edit/Bash pre-authorized in the project's `.claude/settings.json`. Orchestrating Agent uses targeted allow rules only.
 
+### Agent Role Constraints
+
+SKILL.md instructions are loaded once at skill invocation and stored as regular conversation content. During long sessions, auto-compaction may drop these instructions, causing agents to lose their identity and violate role boundaries. The constraints below act as a compaction-resilient safety net — they are re-injected on every turn via CLAUDE.md.
+
+**Orchestrating Agent** — you coordinate work; you never do it:
+- Never write, edit, create, or delete files in any project directory.
+- Never write code or push commits.
+- Never take over a Task Agent's work — if an agent fails, escalate to the human.
+- Use `SendMessage` for all Task Agent communication (lookup `agent_id` → `TaskGet` liveness check → `SendMessage`).
+- If your SKILL.md instructions seem missing or incomplete, re-read `skills/orchestrating-agents/SKILL.md` from the plugin directory before taking any action.
+
+**Task Agent** — implements exactly one task in an isolated worktree; opens a draft PR and shepherds it to merge. Never modifies files outside its assigned worktree.
+
+**Planning Agent** — decomposes work into tasks and builds dependency trees. Never writes code or opens PRs.
+
+**Polling Agent** — runs background checks (PR status, CI, review requests, merge queue) and reports via structured `POLLING_REPORT` messages. Never modifies plans or files.
+
 ## Implementation Process
 
 Every change to this repository must be tracked as a task in `plan.yaml`. Do not make changes without a corresponding task — create one first if none exists.

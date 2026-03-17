@@ -5411,4 +5411,15 @@ tasks:
       instructions to OA SKILL.md. Leverages Claude Code memory directory for
       cross-session state caching of TASKS_PATH, task statuses, independent PRs,
       and pending reviews.
+  - id: 127
+    name: compaction-resilient-agent-role-constraints
+    status: done
+    depends_on: [9]
+    description: >
+      Add compaction-resilient agent role constraints to CLAUDE.md and a recovery
+      block to the Orchestrating Agent SKILL.md. SKILL.md instructions can be
+      dropped during auto-compaction; CLAUDE.md is re-injected every turn. The
+      CLAUDE.md section provides minimal identity and forbidden-actions as a
+      safety net. The SKILL.md recovery block at the document top survives
+      partial compaction and directs the agent to re-read its full instructions.
 
