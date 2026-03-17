@@ -24,12 +24,22 @@ The Orchestrating Agent provides these values in your spawn prompt:
 
 Execute this cycle continuously:
 
-### Step 1: Read plan file
+### Step 0.5: Discover TASKS_PATH
 
-Use `yq` (read-only — never `-i`) to extract in_progress tasks:
+On the **first cycle only**, discover the task sequence path by running `discover-tasks-path.sh` (located in `scripts/` under the plugin root):
 
 ```bash
-yq e '(.tasks // .plan.tasks // .epic.tasks)[] | select(.status == "in_progress")' <plan-file>
+TASKS_PATH=$(<plugin-root>/scripts/discover-tasks-path.sh <plan-file>)
+```
+
+Cache `TASKS_PATH` for the session. Do not re-discover on every cycle.
+
+### Step 1: Read plan file
+
+Use `yq` (read-only — never `-i`) to extract in_progress tasks using the discovered `TASKS_PATH`:
+
+```bash
+yq e "($TASKS_PATH[] | select(.status == \"in_progress\"))" <plan-file>
 ```
 
 Collect each task's `id`, `pr_url`, `agent_id`, `branch`, `worktree`, and whether it is in the merge queue.

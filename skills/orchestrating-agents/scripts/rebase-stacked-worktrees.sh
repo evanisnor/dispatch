@@ -16,10 +16,15 @@ set -euo pipefail
 PLAN_FILE="${1:?Usage: rebase-stacked-worktrees.sh <plan-file> <updated-branch>}"
 UPDATED_BRANCH="${2:?Usage: rebase-stacked-worktrees.sh <plan-file> <updated-branch>}"
 
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Discover the tasks path dynamically
+TASKS_PATH=$("${_SCRIPT_DIR}/../../../scripts/discover-tasks-path.sh" "$PLAN_FILE")
+
 # Find all tasks where stacked == true and base_branch == UPDATED_BRANCH.
 # Output: newline-separated list of "task-id|worktree-path|branch"
 stacked_tasks=$(yq e \
-  ".tasks[] | select(.stacked == true and .base_branch == \"$UPDATED_BRANCH\") | .id + \"|\" + .worktree + \"|\" + .branch" \
+  "$TASKS_PATH[] | select(.stacked == true and .base_branch == \"$UPDATED_BRANCH\") | .id + \"|\" + .worktree + \"|\" + .branch" \
   "$PLAN_FILE" 2>/dev/null || true)
 
 if [[ -z "$stacked_tasks" ]]; then

@@ -5377,7 +5377,7 @@ tasks:
 
   - id: 123
     name: fix-hardcoded-task-paths
-    status: pending
+    status: done
     depends_on: [121]
     description: >
       Fix hardcoded task paths in Polling Agent SKILL.md, rebase-stacked-worktrees.sh,

@@ -91,14 +91,17 @@ cat << ASSIGNMENT
 
 ASSIGNMENT
 
+# Discover the tasks path dynamically
+TASKS_PATH=$("${_SCRIPT_DIR}/../../../scripts/discover-tasks-path.sh" "${PLAN_PATH}")
+
 # For each task ID in CSV, extract name and description from the plan
 IFS=',' read -ra TASK_IDS <<< "${TASK_IDS_CSV}"
 for task_id in "${TASK_IDS[@]}"; do
   task_id="${task_id// /}"  # trim whitespace
 
-  task_name="$(yq e "(.tasks[] | select(.id == \"${task_id}\")).name" "${PLAN_PATH}" 2>/dev/null || true)"
-  task_desc="$(yq e "(.tasks[] | select(.id == \"${task_id}\")).description" "${PLAN_PATH}" 2>/dev/null || true)"
-  task_feature_flag="$(yq e "(.tasks[] | select(.id == \"${task_id}\")).feature_flag // \"\"" "${PLAN_PATH}" 2>/dev/null || true)"
+  task_name="$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).name" "${PLAN_PATH}" 2>/dev/null || true)"
+  task_desc="$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).description" "${PLAN_PATH}" 2>/dev/null || true)"
+  task_feature_flag="$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).feature_flag // \"\"" "${PLAN_PATH}" 2>/dev/null || true)"
 
   if [[ -z "${task_name}" ]]; then
     echo "spawn-prototype-agent.sh: task ID '${task_id}' not found in ${PLAN_PATH}" >&2
