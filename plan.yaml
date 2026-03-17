@@ -5239,3 +5239,26 @@ tasks:
       grouping in CI_SUMMARY, and update CI_FAILURES and CI_PENDING selectors
       to also check .state for StatusContext compatibility.
 
+  - id: 111
+    name: persist-pr-urls-during-reconciliation
+    status: done
+    depends_on: [30]
+    description: >
+      Expand startup reconciliation in SKILL.md to extract full PR URLs when
+      discovering open PRs (step 3b) and backfill pr_url in the plan via
+      yq e -i during auto-correction (step 4). Ensures discovered PR URLs
+      are persisted rather than used transiently.
+
+  - id: 112
+    name: auto-advance-approved-prs-dead-agents
+    status: done
+    depends_on: [111]
+    description: >
+      Add auto-advance logic for orphaned PRs (dead agents) that are already
+      approved with passing CI. Updates SKILL.md authority matrix, hard
+      constraints (exception for already-reviewed PRs), startup reconciliation
+      step 6 (PR status triage before escalation), and recommendation priority
+      table. Updates PR_MONITORING.md Dead liveness check to attempt
+      auto-advance before escalating. Adds notification style entry in
+      NOTIFICATIONS.md.
+

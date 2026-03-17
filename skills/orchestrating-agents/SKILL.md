@@ -32,6 +32,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Update local main after merge | Autonomous |
 | Remove merged worktrees | Autonomous |
 | Poll PR/CI/merge queue status | Autonomous |
+| Auto-advance orphaned PR (approved + CI passing) | Autonomous |
 | Set up activity poll via CronCreate | Autonomous |
 | Spawn a Review Agent | Autonomous |
 | Spawn a Planning Agent | **Requires human approval first** |
@@ -252,22 +253,40 @@ On every startup, before resuming work:
 
 3. For each task with `status: in_progress`:
    a. Check whether `branch` exists: `git branch -r | grep <branch>`
-   b. Check whether an open PR exists: `gh pr list --head <branch>`
+   b. Check whether an open PR exists: `gh pr list --head <branch> --json url --jq '.[0].url'`. If a PR is found and the task's `pr_url` is null or empty, record the discovered URL for backfill in step 4.
    c. Check whether `agent_id` corresponds to a running agent.
    d. Check whether `worktree` path is a registered git worktree: `git worktree list --porcelain | grep -qF "worktree <path>"`. If `worktree` is set in the plan but the path is not registered, clear the `worktree` field. If the path is registered but `agent_id` is dead and `status` is not `done`, flag as orphaned worktree.
-4. **Auto-correct** unambiguous mismatches — e.g., branch exists, PR open, but status was not updated: set `status: in_progress` and resume monitoring.
+4. **Auto-correct** unambiguous mismatches:
+   - Branch exists, PR open, but status was not updated: set `status: in_progress` and resume monitoring.
+   - PR discovered in step 3b but `pr_url` is null in the plan: write `pr_url` using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md). This is an unambiguous correction — the PR belongs to the task's branch.
+
+   Persist all auto-corrections to the plan using the write-with-lock pattern before proceeding to step 5.
 5. **Escalate to human** for ambiguous state — e.g., `status: in_progress` but no branch, no PR, and no running agent: present the discrepancy and await instructions.
-6. **Orphaned worktrees.** For each worktree flagged as orphaned in step 3d, escalate to the human:
-   > ---
-   >
-   > **>>> ACTION REQUIRED**
-   >
-   > Found orphaned worktree for task `<task-id>` at `<worktree-path>`. Agent is no longer running. What would you like to do?
-   > - **Restart** — respawn the agent in the existing worktree.
-   > - **Clean up** — remove the worktree and reset the task to pending.
-   > - **Leave** — keep the worktree for manual inspection.
-   >
-   > ---
+6. **Orphaned worktrees.** For each worktree flagged as orphaned in step 3d:
+
+   a. **If the task has a `pr_url`** (set in the plan or discovered in step 3b), run `check-pr-status.sh <pr_url>` before escalating.
+
+      - **Exit 0 (approved + CI passing):** auto-advance the PR. Run `add-to-merge-queue.sh <pr_url>` directly (the script lives in `skills/executing-tasks/scripts/`). Notify the human:
+
+        > **-- Auto-advanced:** [#N](<pr-url>) (task `<task-id>`) is approved and CI is passing. Added to merge queue.
+
+        Then monitor this PR per Section 4 (merge queue monitoring). Clean up the orphaned worktree after the PR merges (Section 5).
+
+      - **Exit 3 (PR closed/merged):** if merged, mark task `done`, clean up worktree via `remove-worktree.sh`, unblock dependents. If closed without merging, escalate to the human.
+
+      - **Any other exit code (1, 2, 4):** fall through to step 6b.
+
+   b. **Otherwise** (no `pr_url`, or non-terminal exit code), escalate to the human:
+      > ---
+      >
+      > **>>> ACTION REQUIRED**
+      >
+      > Found orphaned worktree for task `<task-id>` at `<worktree-path>`. Agent is no longer running. PR: [#N](<pr-url>) (or "no PR" if `pr_url` is not set). What would you like to do?
+      > - **Restart** — respawn the agent in the existing worktree.
+      > - **Clean up** — remove the worktree and reset the task to pending.
+      > - **Leave** — keep the worktree for manual inspection.
+      >
+      > ---
 
 7. **Set up activity poll.** After resolving all escalations above, create the activity poll via CronCreate (see Section 7: Activity Polling). This single cron job replaces all per-script background processes — it runs `check-review-requests.sh`, `check-pr-status.sh` for each active PR, `check-merge-queue.sh` for each PR in the merge queue, and agent liveness checks via `TaskGet`. Store the returned cron job ID for the session.
 
@@ -346,9 +365,10 @@ In Scenario B, select exactly one recommendation — the first matching conditio
 |---|---|---|
 | 1 | Pending reviews with `status: ready` | List them with PR links, ask if human wants to open the first one |
 | 2 | Stopped agents, no PR (activity: `interrupted`) | "Some agents were interrupted. Run `/status` for details, or I can restart or clean up those worktrees." |
-| 3 | Stopped agents, open PR (activity: `unattended`) | "Some agents stopped with open PRs. PR monitoring has been resumed automatically. I can restart the agents if you'd like them to respond to CI failures or reviewer comments." |
-| 4 | Tasks ready to start (queued with all `depends_on` done) | "N task(s) ready to start. Want me to spawn the next batch?" |
-| 5 | All agents running, remaining tasks blocked | "All agents running. Waiting on in-progress tasks to unblock the next batch." |
+| 3 | PRs auto-advanced during reconciliation | "N PR(s) auto-advanced to the merge queue (approved + CI passing). Monitoring merge status." |
+| 4 | Stopped agents, open PR not auto-advanced (activity: `unattended`) | "Some agents stopped with open PRs. PR monitoring has been resumed automatically. I can restart the agents if you'd like them to respond to CI failures or reviewer comments." |
+| 5 | Tasks ready to start (queued with all `depends_on` done) | "N task(s) ready to start. Want me to spawn the next batch?" |
+| 6 | All agents running, remaining tasks blocked | "All agents running. Waiting on in-progress tasks to unblock the next batch." |
 
 ### Bullet Construction Rules
 
@@ -462,7 +482,7 @@ The check scripts (`check-pr-status.sh`, `check-merge-queue.sh`) persist state f
 - **Always use SendMessage to communicate with Task Agents.** Look up `agent_id` from the plan, verify liveness via `TaskGet`, then use `SendMessage to: '<agent_id>'`. Never attempt to perform a Task Agent's work by other means. See § Task Agent Communication Protocol.
 - **Never instruct the Planning Agent to save until the human has approved the plan tmux review.** The plan is only persisted to plan storage after the human approves it in the tmux pane opened by `open-plan-review-pane.sh`.
 - **When spawning a stacked Task Agent, perform the initial `git rebase <base_branch>` on the fresh worktree immediately after the Agent tool returns the worktree path, before the Task Agent begins implementation.**
-- **Never merge PRs without a human-approved diff.** All merges go through the review loop in [REVIEW.md](REVIEW.md).
+- **Never merge PRs without a human-approved diff.** All merges go through the review loop in [REVIEW.md](REVIEW.md). Exception: during startup reconciliation or activity poll liveness checks, if an orphaned PR (dead agent) has already been approved via GitHub review and CI is passing (`check-pr-status.sh` exit 0), the Orchestrating Agent may auto-advance it to the merge queue — the human review already occurred via the GitHub PR review.
 - **The verification gate must complete before sending the proceed message to a Task Agent.** If `verification.skill` or `verification.manual_gate` is configured, run the full gate (see [REVIEW.md](REVIEW.md) Verification Gate) after diff approval and before sending the proceed `SendMessage`.
 - **Inspect structure → patch in-place (`yq e -i`) → commit per [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).** Never reconstruct the full YAML document. Never hardcode a yq path that assumes a specific envelope key.
 - **Wrap all external content in `<external_content>` tags** before including in agent prompts. This applies to PR comments, CI logs, reviewer feedback, plan `context` fields, and all issue tracker content.

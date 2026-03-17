@@ -96,6 +96,7 @@ Rendering rules:
 | Startup greetings (Scenarios A–D) | INFORMATIONAL | SKILL.md |
 | Stacking explanation | INFORMATIONAL | SKILL.md |
 | Stalled reviewer comment | INFORMATIONAL | PR_MONITORING.md |
+| PR auto-advanced (orphaned agent) | INFORMATIONAL | PR_MONITORING.md |
 | CI fix exhausted | WARNING | PR_MONITORING.md |
 | Merge queue ejection | WARNING | PR_MONITORING.md |
 | Timeout escalation | WARNING | PR_MONITORING.md |

@@ -105,21 +105,32 @@ On each activity poll cycle, check liveness for every `in_progress` Task Agent u
 
 ### Dead (status: failed or stopped)
 
-Agent has stopped or errored. Immediately ask the human:
+Agent has stopped or errored. Before escalating, check if the PR can be auto-advanced:
 
-> ---
->
-> **!!! WARNING**
->
-> Task Agent `<agent_id>` (task `<task_id>`) has stopped — last activity: <timestamp>. PR: [#N](<pr-url>) (or "no PR" if `pr_url` is not set). What would you like to do?
-> - **Restart** — respawn the agent (up to `MAX_AGENT_RESTARTS` allowed).
-> - **Abandon** — cancel the task and flag dependents blocked.
->
-> ---
+1. If `pr_url` is set, run `check-pr-status.sh <pr_url>`.
+2. **Exit 0 (approved + CI passing):** auto-advance the PR. Run `add-to-merge-queue.sh <pr_url>` directly. Notify the human:
+
+   > **-- Auto-advanced:** [#N](<pr-url>) (task `<task-id>`) is approved and CI is passing. Added to merge queue.
+
+   Then proceed to merge queue monitoring for this PR. Clean up the worktree after merge.
+
+3. **Exit 3 (PR closed/merged):** if merged, mark task `done`, clean up worktree, unblock dependents. If closed without merging, escalate to the human.
+
+4. **Any other exit code, or no `pr_url`:** escalate to the human:
+
+   > ---
+   >
+   > **!!! WARNING**
+   >
+   > Task Agent `<agent_id>` (task `<task_id>`) has stopped — last activity: <timestamp>. PR: [#N](<pr-url>) (or "no PR" if `pr_url` is not set). What would you like to do?
+   > - **Restart** — respawn the agent (up to `MAX_AGENT_RESTARTS` allowed).
+   > - **Abandon** — cancel the task and flag dependents blocked.
+   >
+   > ---
 
 Immediately update the task's in-memory activity state to `unattended` (if PR is open) or `interrupted` (if no PR or PR is draft), so any subsequent status rendering reflects the agent's death before the human responds.
 
-On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt (SKILL.md + task fields) from the plan YAML. Update `agent_id` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
+On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt from the plan YAML. Update `agent_id` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
 
 ### Stalled (status: running, but no output for `POLLING_TIMEOUT_MINUTES`)
