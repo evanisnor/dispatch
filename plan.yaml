@@ -5404,7 +5404,7 @@ tasks:
 
   - id: 126
     name: session-state-caching-via-memory
-    status: pending
+    status: done
     depends_on: [121, 125]
     description: >
       Create scripts/save-session-state.sh and add session state caching

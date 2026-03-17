@@ -187,7 +187,8 @@ After a PR is opened — or after startup reconciliation resumes monitoring for 
 After a PR merges:
 1. Call `remove-worktree.sh <worktree-path>`.
 2. Call `update-main.sh` to bring local main up to date.
-3. Mark the completed task `done` in the plan using `yq e -i` with `TASKS_PATH`, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
+3. Mark the completed task `done` in the plan using `plan-update.sh` (preferred) or `yq e -i` with read-back, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
+3.25. **Update session state snapshot.** Call `save-session-state.sh` to write the updated state after the task status change.
 3.5. **Knowledge verification.** Check whether the Task Agent reported recording knowledge entries during its session. If the agent's output does not mention `append-knowledge.sh` or knowledge recording, log a warning: "Task `<task-id>`: no knowledge entries recorded."
 4. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
 5. Follow the stacked worktree post-merge rebase procedure in [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring — Success step 4.5.
@@ -259,6 +260,15 @@ On every startup, before resuming work:
    ls .dispatch.yaml
    ```
    If the file does **not** exist: skip the remaining steps and go directly to **Scenario A: First-Run** in the Startup Greeting below.
+
+0.5. **Load cached session state.** Check for `dispatch-session-state.yaml` in the Claude Code memory directory (the auto-memory path provided at startup). If the file exists:
+   - Read the cached `tasks_path`. Validate it against the plan file with a quick probe: `yq e "$TASKS_PATH[0].id" <plan-file>` returns non-null. If valid, use the cached value and skip full TASKS_PATH discovery later. If invalid, discard the cached value and re-discover.
+   - Compare cached task statuses against the actual plan file. For any task where cached status differs from actual: flag for closer inspection in step 3. Specifically, if cached status is `in_progress` but actual is also `in_progress` AND the cached agent was monitoring the merge queue, this is a strong signal that a status update silently failed.
+   - Use cached `issue_tracking.status` to detect regressions (was `linked`, now has slug IDs).
+   - Use cached `independent_prs` to seed the independent worktree list — skip re-discovery for known entries, only scan for new worktrees. Validate cached entries still exist via `git worktree list --porcelain`.
+   - Use cached `pending_reviews` to restore the pending reviews list. For each entry with status `preliminary` or `ready`, re-check via `check-review-requests.sh` to confirm it's still active. Drop entries whose review requests were removed.
+
+   If the file does not exist, proceed normally — this is a cold start.
 
 1. Load all plan files from plan storage.
 2. **Integrity check — run first, before any other reconciliation.** For each loaded plan, verify:
@@ -356,6 +366,12 @@ On every startup, before resuming work:
       Omit PR and URL rows if no `pr_url` is set.
 
 7. **Spawn the Polling Agent and create the health check cron job** (see Section 7: Activity Polling). The Polling Agent runs all PR/review/merge-queue checks in the background and reports state changes via structured `POLLING_REPORT` messages. The health check cron ensures the Polling Agent stays alive.
+
+8. **Save session state snapshot.** After reconciliation is complete, call `save-session-state.sh` (located in `scripts/` under the plugin root) to write the current session state to the Claude Code memory directory:
+   ```bash
+   <plugin-root>/scripts/save-session-state.sh <memory-dir> <plan-file> [--independent-prs <yaml>] [--pending-reviews <yaml>]
+   ```
+   Pass the independent PR list and pending reviews list as inline YAML strings. This snapshot enables warm-start on the next session.
 
 ## Startup Greeting
 
@@ -580,7 +596,7 @@ Perform these steps during Startup Reconciliation (step 7) after resolving all e
 
 When a `POLLING_REPORT` arrives via SendMessage from the Polling Agent, parse each section and handle accordingly:
 
-- **REVIEW_EVENTS** — handle per [CODE_REVIEW.md](CODE_REVIEW.md).
+- **REVIEW_EVENTS** — handle per [CODE_REVIEW.md](CODE_REVIEW.md). After processing, if the pending reviews list changed (new review request, review completed, or review approved), call `save-session-state.sh` to update the session state snapshot.
 - **PR_STATUS_CHANGES** — handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § PR and CI Monitoring. Use the `agentless` flag to determine whether to message a Task Agent or handle directly.
 - **MERGE_QUEUE_CHANGES** — handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring.
 - **AGENT_LIVENESS** — handle per [PR_MONITORING.md](PR_MONITORING.md) § Liveness Checks. `dead` agents follow the Dead path; `stalled` agents follow the Stalled path.
