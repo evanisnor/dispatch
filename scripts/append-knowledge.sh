@@ -60,7 +60,7 @@ fi
 
 # Validate category value
 category="$(yq e '.category' "${_tmp_entry}")"
-valid_categories=("planning" "ci" "conflict" "pr-review" "general" "prototype")
+valid_categories=("planning" "ci" "conflict" "pr-review" "general" "prototype" "implementation")
 is_valid=false
 for c in "${valid_categories[@]}"; do
   if [[ "${category}" == "${c}" ]]; then

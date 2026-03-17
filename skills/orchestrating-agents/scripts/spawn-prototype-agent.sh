@@ -50,7 +50,7 @@ cat << ASSIGNMENT
 
 - **Plan path:** ${PLAN_PATH}
 - **Branch name:** ${BRANCH_NAME}
-- **PROTOTYPE_AUTO_PUSH:** ${PROTOTYPE_AUTO_PUSH}
+- **AUTO_PUSH:** ${PROTOTYPE_AUTO_PUSH}
 
 ### Tasks
 
@@ -77,4 +77,4 @@ for task_id in "${TASK_IDS[@]}"; do
   echo ""
 done
 
-echo "Implement each task as an exploratory prototype. One commit per task. Do not open pull requests. Return a findings summary when complete."
+echo "Implement each task. One commit per task. Do not open pull requests. Return an implementation report when complete."

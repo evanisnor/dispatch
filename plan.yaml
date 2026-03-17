@@ -5156,3 +5156,15 @@ tasks:
       6 occurrences with BASH_SOURCE[0]-relative sourcing pattern established in
       task 99. Update stale comment in config.sh to reflect the new pattern.
 
+  - id: 104
+    name: reframe-prototype-agent-as-production
+    status: done
+    depends_on: [30]
+    description: >
+      Remove all prototype framing from the agent-facing prompt so the spawned agent
+      believes it is building for production. Rewrite PROTOTYPE.md with Task Agent
+      identity, rename env var labels to AUTO_PUSH, change commit prefix, reframe
+      findings summary as implementation report, and change knowledge category to
+      implementation. Update spawn-prototype-agent.sh assignment label and closing
+      instruction. Add "implementation" to valid_categories in append-knowledge.sh.
+
