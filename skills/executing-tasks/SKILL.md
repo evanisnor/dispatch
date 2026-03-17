@@ -121,6 +121,17 @@ This records the worktree's initial state so `push-changes.sh` can strip local-o
 
 8. **Mark PR ready**: call `mark-pr-ready.sh`.
 
+8.5. **Advance tracker to in-review** — only when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
+    - If `ISSUE_TRACKING_PROMPT` is set: spawn a sub-agent via the Agent tool (`subagent_type: general-purpose`) using `ISSUE_TRACKING_PROMPT` as the task instructions, with the following context appended:
+      ```
+      operation: mark_in_review
+      task_id: <real tracker ID from the plan>
+      task_title: <task title>
+      pr_url: <PR URL>
+      ```
+    - If `ISSUE_TRACKING_PROMPT` is empty: transition the issue to "in review" using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
+    - Report the outcome to the Primary Agent.
+
 9. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
 
 9.5. **Schedule merge** — ask the Primary Agent:

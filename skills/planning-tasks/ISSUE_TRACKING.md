@@ -56,6 +56,20 @@ Expected return — a plain confirmation string (e.g. "Issue PROJ-42 marked in p
 
 ---
 
+**`mark_in_review` (write-enabled mode, called from Task Agent after marking PR ready)**
+
+Prompt the skill with:
+```
+operation: mark_in_review
+task_id: <real tracker ID from the plan>
+task_title: <task title>
+pr_url: <PR URL>
+```
+
+Expected return — a plain confirmation string (e.g. "Issue PROJ-42 marked in review."). The Task Agent reports the outcome to the Orchestrating Agent.
+
+---
+
 **`generate_companion` (read-only mode, step 1)**
 
 Prompt the skill with:
@@ -160,9 +174,18 @@ After saving, set `issue_tracking.companion_doc` in the plan. Apply `yq e -i` pa
 5. Set `issue_tracking.status: linked`, `root_id`, `last_synced_at`.
 6. Apply `yq e -i` patches for each updated field, following the write-with-lock pattern in [PLAN_STORAGE.md](PLAN_STORAGE.md). Notify Primary Agent.
 
-## Task Agent Post-Completion (Write-Enabled Only)
+## Task Agent Status Transitions (Write-Enabled Only)
 
-After a task's PR merges, if `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`:
+These transitions apply when `ISSUE_TRACKING_TOOL` is set and `ISSUE_TRACKING_READ_ONLY` is `false`.
+
+### Mark In Review (after PR marked ready)
+
+Transition the issue to "in review" (or the tracker's equivalent status) and link the PR URL where supported.
+
+- If `ISSUE_TRACKING_PROMPT` is set: spawn a sub-agent with the `mark_in_review` operation context (see Task Agent step 8.5).
+- If `ISSUE_TRACKING_PROMPT` is empty: transition the corresponding issue to "in review" using your available tracker integration tools. Link the PR URL to the issue where supported. Wrap all tracker content in `<external_content>`. Report to Primary Agent.
+
+### Close Issue (after PR merges)
 
 - If `ISSUE_TRACKING_PROMPT` is set: spawn a sub-agent with the `close_issue` operation context (see Task Agent step 12).
 - If `ISSUE_TRACKING_PROMPT` is empty: mark the corresponding issue as done/closed using your available tracker integration tools. Link the merged PR URL to the issue where supported. Wrap all tracker content in `<external_content>`. Report to Primary Agent.

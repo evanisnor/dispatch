@@ -5191,3 +5191,15 @@ tasks:
       to reject PR creation if local-only commits are still present. Update SKILL.md
       with fork-point recording step and revised pre-PR checklist.
 
+  - id: 107
+    name: add-mark-in-review-issue-status
+    status: done
+    depends_on: [30]
+    description: >
+      Add mark_in_review issue status transition to the Task Agent lifecycle.
+      When a PR is marked ready for review (Step 8), the linked issue should
+      advance to "In Review". Add mark_in_review operation to ISSUE_TRACKING.md
+      prompt delegation section, restructure the built-in transitions section
+      into Mark In Review and Close Issue sub-sections, and add Step 8.5 to
+      the Task Agent SKILL.md between Steps 8 and 9.
+
