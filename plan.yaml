@@ -5202,4 +5202,16 @@ tasks:
       prompt delegation section, restructure the built-in transitions section
       into Mark In Review and Close Issue sub-sections, and add Step 8.5 to
       the Task Agent SKILL.md between Steps 8 and 9.
+  - id: 108
+    name: pass-ticket-id-and-feature-flag-to-task-agents
+    status: done
+    depends_on: [30]
+    description: >
+      Pass tracker ticket ID, parent ticket ID, and feature flag through the
+      agent spawn chain so Task Agents can use them in PR descriptions and
+      commit authoring. Add feature_flag to plan YAML schema at epic and task
+      levels. Update Orchestrating Agent spawn prompts, Task Agent PR values,
+      pr-description.sh template variables, spawn-prototype-agent.sh metadata
+      extraction, and config schema docs. Include the new fields in the default
+      PR template when values are available.
 
