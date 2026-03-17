@@ -31,7 +31,7 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 | Edit files in your assigned worktree | Autonomous |
 | Run tests, lint, build | Autonomous |
 | Commit changes to your feature branch | Autonomous |
-| Push to your own feature branch | Autonomous |
+| Push to your own feature branch | Autonomous * |
 | Fix CI failures (up to `max_ci_fix_attempts`) | Autonomous |
 | Reply to reviewer comments with commit links | Autonomous |
 | Open draft PR (after diff approved) | Autonomous |
@@ -43,6 +43,8 @@ You do **not** plan work, spawn other agents, or make decisions about tasks beyo
 | Push to protected branches | **Forbidden — sandbox-enforced** |
 | Merge PRs unilaterally | **Forbidden — sandbox-enforced** |
 | Close PRs | **Requires Primary Agent instruction** |
+
+\* **Post-PR push exception:** After a PR is open, pushes in response to reviewer-requested changes or merge conflict resolutions require human diff approval before pushing. CI fix pushes remain autonomous. See Step 9 and [CONFLICT_RESOLUTION.md](CONFLICT_RESOLUTION.md).
 
 ## PR Lifecycle
 
@@ -157,7 +159,18 @@ This records the worktree's initial state so `push-changes.sh` can strip local-o
     - If `ISSUE_TRACKING_PROMPT` is empty: transition the issue to "in review" using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
     - Report the outcome to the Primary Agent.
 
-9. **Monitor review feedback** via the Primary Agent. Implement and push human-approved changes.
+9. **Monitor review feedback** via the Primary Agent. When the Primary Agent relays an approved reviewer-requested change:
+
+   a. **Implement the change** in your worktree.
+   b. **Verify correctness:**
+      - Run the project's test command — all tests pass.
+      - Run the project's lint command — no lint errors.
+      - Run the project's build command — build succeeds.
+      - Verify no files outside the task's stated scope were modified.
+   c. **Commit locally.** Do not push yet.
+   d. **Notify the Primary Agent** that the change is committed and ready for diff review. Do not push until the Primary Agent confirms human approval.
+   e. **After approval**, push via `push-changes.sh`.
+   f. **After pushing**, reply to the reviewer's comment per the Post-Reviewer-Response Rule below.
 
 9.5. **Schedule merge** — ask the Primary Agent:
    > ---

@@ -181,9 +181,9 @@ Triggered when a PR reviewer requests changes (exit 1) or leaves comments (exit 
    > - **Reject** — provide a response to relay to the reviewer.
    >
    > ---
-3. **On approval:** look up the Task Agent's `agent_id` from the plan, run the liveness guard (SKILL.md § Task Agent Communication Protocol), then `SendMessage to: '<agent_id>'`: "Reviewer change approved — implement the following change: <summary of approved change>."
+3. **On approval:** look up the Task Agent's `agent_id` from the plan, run the liveness guard (SKILL.md § Task Agent Communication Protocol), then `SendMessage to: '<agent_id>'`: "Reviewer change approved — implement the following change and commit locally (do not push yet — I will review the diff first): <summary of approved change>."
 4. **On rejection:** tell the Task Agent the human does not agree with the requested change and provide a response to relay to the reviewer.
-5. Once the Task Agent has implemented and pushed the approved change:
+5. Once the Task Agent has implemented and committed the approved change (not yet pushed):
    a. Call `open-review-pane.sh "review-update-<task-id>" "<worktree-path>"`. Store the returned window ID.
    b. Present the updated diff to the human using the ACTION REQUIRED banner:
       > ---
@@ -200,7 +200,9 @@ Triggered when a PR reviewer requests changes (exit 1) or leaves comments (exit 
       > | {pr_url} |
       >
       > ---
-   c. Call `close-pane.sh "<window-id>"` after human confirms.
+   c. **Await human decision.** Call `close-pane.sh "<window-id>"` after the human responds.
+   c2. **On approval:** look up the Task Agent's `agent_id` from the plan, run the liveness guard (SKILL.md § Task Agent Communication Protocol), then `SendMessage to: '<agent_id>'`: "Reviewer change approved — push via `push-changes.sh`."
+   c3. **On rejection:** send structured rejection to Task Agent (see Initial Diff Review Loop step 5). The Task Agent addresses the feedback and re-notifies when ready; return to step 5a.
    d. **Record pending re-review.** Store a `pending_re_review` record for this PR in the OA's in-memory state, containing the PR URL and the reviewer username(s) from step 1. The actual re-request is deferred until CI passes — see [PR_MONITORING.md](PR_MONITORING.md) exit 4 handling. Do NOT call `request-re-review.sh` here. Three possible outcomes:
       - CI passes, reviewer hasn't approved → re-request triggered by PR_MONITORING.md exit 4 handler
       - CI passes, reviewer already approved → exit 0 fires, normal merge path

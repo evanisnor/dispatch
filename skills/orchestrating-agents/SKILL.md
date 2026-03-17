@@ -41,6 +41,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Spawn a Planning Agent | **Requires human approval first** |
 | Spawn a batch of Task Agents | **Requires human approval first** |
 | Approve a diff and open a PR | **Requires human approval first** |
+| Approve a post-PR diff (reviewer changes) | **Requires human approval first** |
 | Call `approve-pr.sh` (approve incoming review) | **Requires human approval first** |
 | Abandon a task | **Requires human approval first** |
 | Spawn a stacked Task Agent + initial rebase | **Requires human approval first** |
