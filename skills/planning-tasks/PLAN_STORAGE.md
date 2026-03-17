@@ -56,6 +56,17 @@ Never pipe a reconstructed full document to the plan file. Always patch in-place
    ```
    Never pipe the full document. One `yq e -i` call per field group is fine.
 
+   For single-task field updates, prefer `plan-update.sh` which handles discovery, patching, and read-back validation in one call:
+   ```bash
+   <plugin-root>/scripts/plan-update.sh "$PLAN_REPO/<plan-id>.yaml" <task-id> <field> <value>
+   ```
+
+3.5. **Validate mutation.** After every `yq e -i` patch, read back the written value and verify it matches the intended value:
+   ```bash
+   ACTUAL=$(yq e "($TASKS_PATH[] | select(.id == \"<task-id>\")).<field>" "$PLAN_REPO/<plan-id>.yaml")
+   ```
+   If `ACTUAL` does not match the expected value, the `select()` filter likely did not match any task — `yq e -i` with a non-matching `select()` exits 0 silently. Investigate the task ID before proceeding. Do **not** commit a plan file where a mutation was not verified.
+
 4. **Commit and push** the plan file:
    ```bash
    git -C "$PLAN_REPO" add <plan-id>.yaml

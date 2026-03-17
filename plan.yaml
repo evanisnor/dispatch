@@ -5386,7 +5386,7 @@ tasks:
 
   - id: 124
     name: post-backfill-integrity-validation
-    status: pending
+    status: done
     depends_on: [122]
     description: >
       Add post-backfill integrity validation to ISSUE_TRACKING.md and mutation
