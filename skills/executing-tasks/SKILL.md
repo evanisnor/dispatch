@@ -67,6 +67,13 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
         ```
       - If `ISSUE_TRACKING_PROMPT` is empty: mark the issue in progress using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
 
+**1.6. Record fork point.**
+If `base_branch` was **not** provided in the spawn input (i.e., this is not a stacked worktree):
+```bash
+git rev-parse HEAD > "$(git rev-parse --git-dir)/dispatch-fork-point"
+```
+This records the worktree's initial state so `push-changes.sh` can strip local-only main commits at push time. Stacked worktrees skip this step — they were already rebased onto the parent branch, so local-only main commits aren't in their ancestry.
+
 2. **Implement** the task in your assigned worktree.
 3. **Complete pre-PR checklist** (see below).
 4. **Request diff approval** from the Primary Agent.
@@ -171,7 +178,7 @@ Complete all of the following before requesting diff approval:
 - [ ] Run the project's lint command — no lint errors.
 - [ ] Run the project's build command — build succeeds.
 - [ ] Verify no files outside the task's stated scope were modified.
-- [ ] Confirm branch is rebased onto latest local `main` (`git rebase origin/main`).
+- [ ] Push the branch via `push-changes.sh` (automatically rebases onto `origin/main` and strips any local-only main commits).
 
 Do not request diff approval until every item is checked.
 

@@ -5179,3 +5179,15 @@ tasks:
       mandatory in Task Agent and Planning Agent, add knowledge oversight to
       Orchestrating Agent, and update KNOWLEDGE.md categories table.
 
+  - id: 106
+    name: fork-point-guard
+    status: done
+    depends_on: [30]
+    description: >
+      Strip local-only main commits from PRs. Record the worktree's initial
+      HEAD as a fork point before any task commits. At push time, push-changes.sh
+      uses git rebase --onto origin/main <fork-point> to replay only task commits,
+      stripping any local-only main commits. Add defensive check in open-draft-pr.sh
+      to reject PR creation if local-only commits are still present. Update SKILL.md
+      with fork-point recording step and revised pre-PR checklist.
+
