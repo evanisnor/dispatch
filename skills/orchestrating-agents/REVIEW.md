@@ -161,7 +161,7 @@ If both `VERIFICATION_PROMPT` and `VERIFICATION_MANUAL_GATE` are set, the sub-ag
 
 Triggered when a PR reviewer requests changes (exit 1) or leaves comments (exit 5) after the PR is open. The triggering event provides reviewer username(s).
 
-1. Extract and store the reviewer username(s) from the Polling Agent report summary (parsed from "changes requested by ..." or "reviewer comments from ...") for use at the end of the loop.
+1. Extract and store the reviewer username(s) from the check-pr-status.sh output (parsed from "changes requested by ..." or "reviewer comments from ...") for use at the end of the loop.
 2. Present the requested change to the human using the ACTION REQUIRED banner. Use "left comments" or "requested changes" depending on which exit code triggered the loop. Include `@{reviewer_username}` in the notification:
    > ---
    >

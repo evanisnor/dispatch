@@ -5386,3 +5386,9 @@ tasks:
     status: done
     depends_on: []
     description: Add diff approval gate before pushing reviewer-requested changes to an open PR. Task Agents now commit locally, request diff review, and wait for human approval before pushing — matching the existing conflict resolution pattern.
+
+  - id: 130
+    name: replace-polling-agent-with-cron-driven-inline-polling
+    status: done
+    depends_on: []
+    description: Eliminate the Polling Agent entirely and have the OA run check scripts itself on a cron schedule. Delete polling-agent SKILL.md, rewrite Section 7 of orchestrating-agents SKILL.md to use CronCreate with a self-contained polling cycle prompt, update all Polling Agent references across PR_MONITORING.md, REVIEW.md, config SKILL.md, and CLAUDE.md.

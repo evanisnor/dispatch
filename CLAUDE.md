@@ -111,8 +111,6 @@ SKILL.md instructions are loaded once at skill invocation and stored as regular 
 
 **Planning Agent** — decomposes work into tasks and builds dependency trees. Never writes code or opens PRs.
 
-**Polling Agent** — runs background checks (PR status, CI, review requests, merge queue) and reports via structured `POLLING_REPORT` messages. Never modifies plans or files.
-
 ## Implementation Process
 
 Every change to this repository must be tracked as a task in `plan.yaml`. Do not make changes without a corresponding task — create one first if none exists.

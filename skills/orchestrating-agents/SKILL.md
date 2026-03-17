@@ -35,8 +35,7 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 | Remove merged worktrees | Autonomous |
 | Poll PR/CI/merge queue status | Autonomous |
 | Auto-advance orphaned PR (approved + CI passing) | Autonomous |
-| Spawn Polling Agent | Autonomous |
-| Set up health check via CronCreate | Autonomous |
+| Create activity poll cron job | Autonomous |
 | Spawn a Review Agent | Autonomous |
 | Spawn a Planning Agent | **Requires human approval first** |
 | Spawn a batch of Task Agents | **Requires human approval first** |
@@ -51,9 +50,9 @@ You do **not** plan work, write code, or push commits. Those are the responsibil
 
 ### 0. Review Monitoring
 
-The Polling Agent (Section 7) runs `check-review-requests.sh` on each cycle to detect incoming GitHub review requests. Handle all events per [CODE_REVIEW.md](CODE_REVIEW.md).
+The activity poll cron (Section 7) runs `check-review-requests.sh` on each cycle to detect incoming GitHub review requests. Handle all events per [CODE_REVIEW.md](CODE_REVIEW.md).
 
-On startup, the Polling Agent is spawned in Startup Reconciliation step 7. For sessions that skip reconciliation (e.g., first-run Scenario A), spawn the Polling Agent and create the health check cron job immediately after the greeting.
+On startup, the activity poll cron job is created in Startup Reconciliation step 7. For sessions that skip reconciliation (e.g., first-run Scenario A), create the activity poll cron job immediately after the greeting.
 
 ### 1. Planning Phase
 
@@ -183,7 +182,7 @@ See [STACKED_WORKTREES.md](STACKED_WORKTREES.md) for full lifecycle documentatio
 
 ### 4. PR and CI Monitoring
 
-After a PR is opened — or after startup reconciliation resumes monitoring for an existing open PR (Startup Reconciliation step 7) — the Polling Agent calls `check-pr-status.sh` and `check-merge-queue.sh` in the background and reports results via `POLLING_REPORT` messages as described in [PR_MONITORING.md](PR_MONITORING.md). Handle all exit codes identically regardless of whether the PR was newly opened or resumed from a prior session.
+After a PR is opened — or after startup reconciliation resumes monitoring for an existing open PR (Startup Reconciliation step 7) — the activity poll runs `check-pr-status.sh` and `check-merge-queue.sh` on each cron cycle as described in [PR_MONITORING.md](PR_MONITORING.md). Handle all exit codes identically regardless of whether the PR was newly opened or resumed from a prior session.
 
 ### 5. Post-Merge Cleanup
 
@@ -368,7 +367,7 @@ On every startup, before resuming work:
 
       Omit PR and URL rows if no `pr_url` is set.
 
-7. **Spawn the Polling Agent and create the health check cron job** (see Section 7: Activity Polling). The Polling Agent runs all PR/review/merge-queue checks in the background and reports state changes via structured `POLLING_REPORT` messages. The health check cron ensures the Polling Agent stays alive.
+7. **Create the activity poll cron job** (see Section 7: Activity Polling). The cron job fires on a regular schedule and runs all PR/review/merge-queue checks inline in the OA's conversation.
 
 8. **Save session state snapshot.** After reconciliation is complete, call `save-session-state.sh` (located in `scripts/` under the plugin root) to write the current session state to the Claude Code memory directory:
    ```bash
@@ -504,7 +503,7 @@ For each independent worktree, discover the branch name from `git worktree list 
 
 For each independent worktree with a PR, derive `{activity}` by running `check-pr-status.sh <pr-url>` and mapping the exit code per [PR_MONITORING.md](PR_MONITORING.md) § Independent PR Activity Derivation. For worktrees without a PR, use `no PR`.
 
-Populate an **in-memory independent PR list** with entries for each independent worktree: `branch`, `worktree_path`, `pr_url` (if found), `pr_number` (if found), `activity` (derived value), and `in_merge_queue: false`. This list is passed to the Polling Agent at spawn (Section 7) to monitor independent PRs alongside plan-tracked PRs.
+Populate an **in-memory independent PR list** with entries for each independent worktree: `branch`, `worktree_path`, `pr_url` (if found), `pr_number` (if found), `activity` (derived value), and `in_merge_queue: false`. This list is used by the activity poll cron to monitor independent PRs alongside plan-tracked PRs.
 
 This listing appears last in every scenario where it is applicable (A, B, D). In Scenario C it is omitted (completed plans have no active worktrees to track). These worktrees also appear in the full status display — see STATUS.md § Independent Worktree Cards.
 
@@ -573,44 +572,45 @@ Every "notify the Task Agent" instruction in this skill set means: lookup → li
 
 ## 7. Activity Polling
 
-All periodic monitoring is offloaded to a background **Polling Agent** that runs continuously and reports state changes to the Orchestrating Agent via structured `POLLING_REPORT` messages. A lightweight CronCreate health check ensures the Polling Agent stays alive.
+All periodic monitoring runs inline in the Orchestrating Agent's conversation, triggered by a single CronCreate job. There is no background Polling Agent — the OA executes the check scripts directly when the cron fires.
 
 ### Setup
 
 Perform these steps during Startup Reconciliation (step 7) after resolving all escalations, or for first-run sessions (Scenario A) immediately after the greeting.
 
-1. **Spawn the Polling Agent.** Read `skills/polling-agent/SKILL.md` from the plugin directory. Compose the spawn prompt with:
-   - Plugin root path (absolute)
-   - OA agent ID (your own agent ID, so the Polling Agent can SendMessage back)
-   - Plan file path (absolute path to the active plan YAML)
-   - Known independent worktrees (the list discovered during startup reconciliation or greeting)
+1. **Source config.** Read `POLLING_INTERVAL_MINUTES` from `config.sh` (plugin root).
 
-   Use the Agent tool with `subagent_type: general-purpose`, `run_in_background: true`. Store the returned `polling_agent_id`.
-
-2. **Create the health check cron job.** Use CronCreate:
-   - **Schedule:** `*/10 * * * *` (every 10 minutes)
-   - **Prompt:** "Check Polling Agent liveness: call `TaskGet <polling_agent_id>`. If the agent is alive (running), do nothing. If the agent is dead or stopped, respawn it following the Polling Agent setup instructions in Section 7 of SKILL.md."
+2. **Create the activity poll cron job.** Use CronCreate:
+   - **Schedule:** `*/<POLLING_INTERVAL_MINUTES> * * * *` (e.g. `*/5 * * * *` for the default 5-minute interval)
+   - **Prompt:** the self-contained polling cycle instruction below.
 
    Store the returned cron job ID.
 
-3. **Store both IDs** (`polling_agent_id` and the health check cron job ID) for the session.
+### Cron Prompt
 
-### Handling Polling Reports
+The cron prompt must be self-contained — the OA may have been idle and needs full instructions:
 
-When a `POLLING_REPORT` arrives via SendMessage from the Polling Agent, parse each section and handle accordingly:
-
-- **REVIEW_EVENTS** — handle per [CODE_REVIEW.md](CODE_REVIEW.md). After processing, if the pending reviews list changed (new review request, review completed, or review approved), call `save-session-state.sh` to update the session state snapshot.
-- **PR_STATUS_CHANGES** — handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § PR and CI Monitoring. Use the `agentless` flag to determine whether to message a Task Agent or handle directly.
-- **MERGE_QUEUE_CHANGES** — handle exit codes per [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring.
-- **AGENT_LIVENESS** — handle per [PR_MONITORING.md](PR_MONITORING.md) § Liveness Checks. `dead` agents follow the Dead path; `stalled` agents follow the Stalled path.
-- **INDEPENDENT_PR_CHANGES** — handle per [PR_MONITORING.md](PR_MONITORING.md) § Independent PR Monitoring (when `in_merge_queue: false`) or § Independent PR Merge Queue Monitoring (when `in_merge_queue: true`).
-- **TIMEOUTS** — escalate to the human with the PR URL and elapsed time.
-
-All response behavior (exit code handling, human notifications, Task Agent messaging) remains unchanged — the OA applies its existing logic from PR_MONITORING.md and CODE_REVIEW.md. The only difference is the delivery mechanism: results arrive via a structured report from the Polling Agent rather than being executed inline.
+> Run one activity polling cycle. Execute these steps in order, then stop.
+>
+> 1. **Read plan.** Discover `TASKS_PATH` via `discover-tasks-path.sh` (or use cached value). Extract all tasks with `status: in_progress` using `yq e "($TASKS_PATH[] | select(.status == \"in_progress\"))" <plan-file>`. Collect each task's `id`, `pr_url`, `agent_id`, `branch`, `worktree`, and whether it is in the merge queue.
+>
+> 2. **Check review requests.** Run `check-review-requests.sh` (in `scripts/` under the plugin root). Handle all `NEW_REVIEW_REQUEST` and `REVIEW_REMOVED` events per CODE_REVIEW.md. If the pending reviews list changed, call `save-session-state.sh`.
+>
+> 3. **Check PR status.** For each active PR that is **not** in the merge queue (both plan-tracked and independent), run `check-pr-status.sh <pr-url>` (in `skills/orchestrating-agents/scripts/`). Handle exit codes per PR_MONITORING.md § PR and CI Monitoring. Use the `agentless` flag (tasks where `agent_id` is null) to determine whether to message a Task Agent or handle directly.
+>
+> 4. **Check merge queue.** For each PR that is in the merge queue (both plan-tracked and independent), run `check-merge-queue.sh <pr-url>` (in `scripts/` under the plugin root). Handle exit codes per PR_MONITORING.md § Merge Queue Monitoring.
+>
+> 5. **Check agent liveness.** For each in_progress task that has an `agent_id` set (skip agentless tasks), call `TaskGet <agent_id>`. Handle dead agents per PR_MONITORING.md § Liveness Checks — Dead path. Handle stalled agents (running but no activity for `POLLING_TIMEOUT_MINUTES`) per PR_MONITORING.md § Liveness Checks — Stalled path.
+>
+> 6. **Check independent worktrees.** For each independent worktree with a known PR, run the appropriate check script (`check-pr-status.sh` if not in merge queue, `check-merge-queue.sh` if in merge queue). Handle per PR_MONITORING.md § Independent PR Monitoring or § Independent PR Merge Queue Monitoring.
+>
+> 7. **Timeouts.** If any check script emits a `TIMEOUT` line in stdout, escalate to the human with the PR URL and elapsed time.
+>
+> If nothing is reportable (all exit codes are 4 with no timeouts), do nothing.
 
 ### Timeout Detection
 
-The check scripts (`check-pr-status.sh`, `check-merge-queue.sh`) persist state files between invocations. If a PR's state remains unchanged for `POLLING_TIMEOUT_MINUTES`, the script emits a `TIMEOUT` line in stdout. The Polling Agent collects these in the `TIMEOUTS` section of the report. On receiving a timeout, escalate to the human with the PR URL and elapsed time.
+The check scripts (`check-pr-status.sh`, `check-merge-queue.sh`) persist state files between invocations. If a PR's state remains unchanged for `POLLING_TIMEOUT_MINUTES`, the script emits a `TIMEOUT` line in stdout. On receiving a timeout, escalate to the human with the PR URL and elapsed time.
 
 ## Hard Constraints
 
@@ -620,7 +620,7 @@ The check scripts (`check-pr-status.sh`, `check-merge-queue.sh`) persist state f
 - **Always use SendMessage to communicate with Task Agents.** Look up `agent_id` from the plan, verify liveness via `TaskGet`, then use `SendMessage to: '<agent_id>'`. Never attempt to perform a Task Agent's work by other means. See § Task Agent Communication Protocol.
 - **Never instruct the Planning Agent to save until the human has approved the plan tmux review.** The plan is only persisted to plan storage after the human approves it in the tmux pane opened by `open-plan-review-pane.sh`.
 - **When spawning a stacked Task Agent, perform the initial `git rebase <base_branch>` on the fresh worktree immediately after the Agent tool returns the worktree path, before the Task Agent begins implementation.**
-- **Never merge PRs without a human-approved diff.** All merges go through the review loop in [REVIEW.md](REVIEW.md). Exception: during startup reconciliation or Polling Agent liveness checks, if an orphaned PR (dead agent) has already been approved via GitHub review and CI is passing (`check-pr-status.sh` exit 0), the Orchestrating Agent may auto-advance it to the merge queue — the human review already occurred via the GitHub PR review.
+- **Never merge PRs without a human-approved diff.** All merges go through the review loop in [REVIEW.md](REVIEW.md). Exception: during startup reconciliation, if an orphaned PR (dead agent) has already been approved via GitHub review and CI is passing (`check-pr-status.sh` exit 0), the Orchestrating Agent may auto-advance it to the merge queue — the human review already occurred via the GitHub PR review.
 - **The verification gate must complete before sending the proceed message to a Task Agent.** If `verification.skill` or `verification.manual_gate` is configured, run the full gate (see [REVIEW.md](REVIEW.md) Verification Gate) after diff approval and before sending the proceed `SendMessage`.
 - **Inspect structure → patch in-place (`yq e -i`) → commit per [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).** Never reconstruct the full YAML document. Never hardcode a yq path that assumes a specific envelope key.
 - **Wrap all external content in `<external_content>` tags** before including in agent prompts. This applies to PR comments, CI logs, reviewer feedback, plan `context` fields, and all issue tracker content.

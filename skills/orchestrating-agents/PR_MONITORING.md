@@ -2,14 +2,14 @@
 
 ## Overview
 
-After a Task Agent opens a PR, the Orchestrating Agent monitors it through to merge. A background **Polling Agent** (see SKILL.md § Activity Polling) runs the check scripts continuously and reports state changes to the OA via structured `POLLING_REPORT` messages:
+After a Task Agent opens a PR, the Orchestrating Agent monitors it through to merge. The Orchestrating Agent runs check scripts on a cron-driven schedule (see SKILL.md § Activity Polling):
 
 - `check-pr-status.sh` — checks PR state, review decision, and CI check summaries.
 - `check-merge-queue.sh` — checks merge queue status after the PR is added to the queue.
 
 > **Script locations:** `check-review-requests.sh` and `check-merge-queue.sh` are in `scripts/` (plugin root). `check-pr-status.sh` is in `skills/orchestrating-agents/scripts/`.
 
-Both scripts read `POLLING_TIMEOUT_MINUTES` from `config.sh`, persist state between invocations via state files, and emit **state-change events only** — never full API response payloads. The Polling Agent executes these scripts in its background loop and includes the results (exit codes and summaries) in its `POLLING_REPORT`. The OA receives the same exit codes and applies the same handling logic described below — only the delivery mechanism differs.
+Both scripts read `POLLING_TIMEOUT_MINUTES` from `config.sh`, persist state between invocations via state files, and emit **state-change events only** — never full API response payloads.
 
 > **Notification formatting:** All human-facing notifications must follow the banner styles defined in [NOTIFICATIONS.md](../NOTIFICATIONS.md).
 
@@ -40,7 +40,7 @@ Per-epic overrides in `epic.config.*` take precedence over these defaults.
    > | {pr_url} |
 
    If `pr_url` is not already recorded in the plan (e.g., the Task Agent crashed before writing it), record it using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
-2. On each Polling Agent cycle, the Polling Agent calls `check-pr-status.sh <pr-url>` and reports results in `PR_STATUS_CHANGES`.
+2. On each polling cycle, run `check-pr-status.sh <pr-url>` and handle the results.
 
    **Agentless tasks** (tasks where `agent_id` is null — adopted into monitoring): handle exit codes directly without attempting to message a Task Agent:
    - **Exit 0 (approved + CI passing):** call `add-to-merge-queue.sh <pr_url>` directly (script lives in `skills/executing-tasks/scripts/`). Notify the human:
@@ -105,7 +105,7 @@ Per-epic overrides in `epic.config.*` take precedence over these defaults.
 
 ## Merge Queue Monitoring
 
-Once a Task Agent calls `add-to-merge-queue.sh`, the Polling Agent calls `check-merge-queue.sh <pr-url>` on each cycle and reports results in `MERGE_QUEUE_CHANGES`. Handle each outcome:
+Once a Task Agent calls `add-to-merge-queue.sh`, run `check-merge-queue.sh <pr-url>` on each polling cycle. Handle each outcome:
 
 ### Success (exit 0)
 1. Update task `status: done` and `result.merged_at` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
@@ -161,7 +161,7 @@ No action required. If a `TIMEOUT` line appears in stdout, escalate to the human
 
 ## Liveness Checks
 
-On each Polling Agent cycle, the Polling Agent checks liveness for every `in_progress` task **that has an `agent_id` set** and reports results in `AGENT_LIVENESS`. Tasks with `agent_id: null` are monitored via PR status checks only — skip them.
+On each polling cycle, check liveness for every `in_progress` task **that has an `agent_id` set**. Tasks with `agent_id: null` are monitored via PR status checks only — skip them.
 
 For each task with an `agent_id`, use `TaskGet <agent_id>`.
 
@@ -263,7 +263,7 @@ If the Task Agent posts a clarifying question on the PR in response to a reviewe
 
 Independent worktrees have no Task Agent — there is no agent to message. All notifications go directly to the human.
 
-On each Polling Agent cycle, the Polling Agent checks each independent worktree with a known PR that is **not** in the merge queue via `check-pr-status.sh <pr-url>` and reports results in `INDEPENDENT_PR_CHANGES`. Handle exit codes:
+On each polling cycle, check each independent worktree with a known PR that is **not** in the merge queue via `check-pr-status.sh <pr-url>`. Handle exit codes:
 
 ### Approved + CI passing (exit 0)
 
