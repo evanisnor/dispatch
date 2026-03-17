@@ -5355,3 +5355,60 @@ tasks:
       to reflect that checks are now run by the Polling Agent in the background
       and reported via structured POLLING_REPORT messages.
 
+  - id: 121
+    name: create-discover-tasks-path-script
+    status: done
+    depends_on: []
+    description: >
+      Create scripts/discover-tasks-path.sh — reusable bash 3.2 script that
+      encapsulates the TASKS_PATH discovery logic from PLAN_STORAGE.md Structure
+      Inspection. Input: plan file path. Output: prints discovered path to stdout.
+      Exit codes: 0=found, 1=file not found, 2=no task sequence found.
+
+  - id: 122
+    name: create-plan-update-script
+    status: pending
+    depends_on: [121]
+    description: >
+      Create scripts/plan-update.sh — centralized plan mutation script with
+      mandatory read-back validation. Usage: plan-update.sh <plan-file> <task-id>
+      <field> <value>. Calls discover-tasks-path.sh, applies yq patch, reads back
+      and verifies. Exit codes: 0=verified, 1=update failed, 2=structure error.
+
+  - id: 123
+    name: fix-hardcoded-task-paths
+    status: pending
+    depends_on: [121]
+    description: >
+      Fix hardcoded task paths in Polling Agent SKILL.md, rebase-stacked-worktrees.sh,
+      and spawn-prototype-agent.sh to use discover-tasks-path.sh instead of
+      hardcoded .tasks[] or fallback chains.
+
+  - id: 124
+    name: post-backfill-integrity-validation
+    status: pending
+    depends_on: [122]
+    description: >
+      Add post-backfill integrity validation to ISSUE_TRACKING.md and mutation
+      validation step to PLAN_STORAGE.md. Three checks: no remaining slugs,
+      referential integrity, completeness. On failure: revert and escalate.
+
+  - id: 125
+    name: enhance-startup-integrity-and-plan-update-rule
+    status: pending
+    depends_on: [121]
+    description: >
+      Enhance Startup Reconciliation integrity check with ID consistency and
+      dependency reference sub-checks. Rewrite Plan Update Rule to recommend
+      plan-update.sh. Update Task Agent SKILL.md with plan-update.sh alternative.
+
+  - id: 126
+    name: session-state-caching-via-memory
+    status: pending
+    depends_on: [121, 125]
+    description: >
+      Create scripts/save-session-state.sh and add session state caching
+      instructions to OA SKILL.md. Leverages Claude Code memory directory for
+      cross-session state caching of TASKS_PATH, task statuses, independent PRs,
+      and pending reviews.
+
