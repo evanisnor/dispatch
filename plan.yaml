@@ -5403,3 +5403,8 @@ tasks:
     status: done
     depends_on: []
     description: Move PR state transitions (mark-ready, merge-queue) from Task Agent to Orchestrating Agent. Task Agents can no longer call mark-pr-ready.sh, add-to-merge-queue.sh, gh pr ready, or gh pr merge. The OA handles both transitions with human approval gates, converting prompt-level enforcement into mechanical enforcement.
+  - id: 133
+    name: replace-rebase-with-merge-for-origin-main-sync
+    status: done
+    depends_on: []
+    description: Replace rebase-onto-origin/main with merge-up strategy. Remove the fork-point guard from push-changes.sh (no more git rebase --onto origin/main, no more --force-with-lease). Remove the fork-point defensive check from open-draft-pr.sh. Change CONFLICT_RESOLUTION.md to use git merge origin/main instead of git rebase origin/main. Remove step 1.6 (fork-point recording) from executing-tasks SKILL.md and update related wording. Stacked worktree rebase logic is unchanged.
