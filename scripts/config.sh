@@ -111,7 +111,7 @@ export POLLING_TIMEOUT_MINUTES
 POLLING_TIMEOUT_MINUTES="$(_cfg '.defaults.polling_timeout_minutes' '.defaults.polling_timeout_minutes' '60')"
 
 export POLLING_INTERVAL_MINUTES
-POLLING_INTERVAL_MINUTES="$(_cfg '.defaults.polling_interval_minutes' '.defaults.polling_interval_minutes' '5')"
+POLLING_INTERVAL_MINUTES="$(_cfg '.defaults.polling_interval_minutes' '.defaults.polling_interval_minutes' '15')"
 
 export MAIN_UPDATE_STRATEGY
 MAIN_UPDATE_STRATEGY="$(_cfg '.git.main_update_strategy' '.defaults.main_update_strategy' 'rebase')"

@@ -215,7 +215,7 @@ How long (in minutes) watch scripts and liveness checks poll before timing out a
 | | |
 |---|---|
 | Type | `integer` |
-| Default | `5` |
+| Default | `15` |
 
 How often (in minutes) the activity poll checks GitHub for PR, review, and merge queue status changes. Lower values increase responsiveness but use more API calls.
 

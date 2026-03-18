@@ -637,7 +637,7 @@ Perform these steps during Startup Reconciliation (step 7) after resolving all e
 1. **Source config.** Read `POLLING_INTERVAL_MINUTES` from `config.sh` (plugin root).
 
 2. **Create the activity poll cron job.** Use CronCreate:
-   - **Schedule:** `*/<POLLING_INTERVAL_MINUTES> * * * *` (e.g. `*/5 * * * *` for the default 5-minute interval)
+   - **Schedule:** `*/<POLLING_INTERVAL_MINUTES> * * * *` (e.g. `*/15 * * * *` for the default 15-minute interval)
    - **Prompt:** the self-contained polling cycle instruction below.
 
    Store the returned cron job ID.

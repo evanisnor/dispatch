@@ -5408,3 +5408,17 @@ tasks:
     status: done
     depends_on: []
     description: Replace rebase-onto-origin/main with merge-up strategy. Remove the fork-point guard from push-changes.sh (no more git rebase --onto origin/main, no more --force-with-lease). Remove the fork-point defensive check from open-draft-pr.sh. Change CONFLICT_RESOLUTION.md to use git merge origin/main instead of git rebase origin/main. Remove step 1.6 (fork-point recording) from executing-tasks SKILL.md and update related wording. Stacked worktree rebase logic is unchanged.
+
+  - id: 134
+    name: increase-default-polling-interval
+    status: done
+    depends_on: []
+    description: >
+      Increase default polling interval from 5 to 15 minutes. Update settings.yaml, .dispatch.example.yaml, scripts/config.sh fallback, skills/orchestrating-agents/SKILL.md cron example, and skills/config/SKILL.md documented default.
+
+  - id: 135
+    name: consolidate-github-polling
+    status: in_progress
+    depends_on: [134]
+    description: >
+      Consolidate all GitHub polling into a single entry-point script (scripts/poll-github.sh) that wraps check-review-requests.sh, check-pr-status.sh, and check-merge-queue.sh. Update the SKILL.md cron prompt to call the consolidated script and update PR_MONITORING.md overview.
