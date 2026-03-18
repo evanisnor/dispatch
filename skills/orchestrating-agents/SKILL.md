@@ -650,19 +650,15 @@ The cron prompt must be self-contained — the OA may have been idle and needs f
 >
 > 1. **Read plan.** Discover `TASKS_PATH` via `discover-tasks-path.sh` (or use cached value). Extract all tasks with `status: in_progress` using `yq e "($TASKS_PATH[] | select(.status == \"in_progress\"))" <plan-file>`. Collect each task's `id`, `pr_url`, `agent_id`, `branch`, `worktree`, and whether it is in the merge queue.
 >
-> 2. **Check review requests.** Run `check-review-requests.sh` (in `scripts/` under the plugin root). Handle all `NEW_REVIEW_REQUEST` and `REVIEW_REMOVED` events per CODE_REVIEW.md. If the pending reviews list changed, call `save-session-state.sh`.
+> 2. **Poll GitHub.** Build YAML listing all PRs to check (plan-tracked and independent) with each PR's `number`, `url`, and `in_merge_queue` flag. Pipe to `poll-github.sh` (in `scripts/` under the plugin root). Parse the structured YAML output:
+>    - Under `review_requests.events`: handle all `NEW_REVIEW_REQUEST` and `REVIEW_REMOVED` lines per CODE_REVIEW.md. If the pending reviews list changed, call `save-session-state.sh`.
+>    - Under `prs[]`: for each entry, handle `exit_code` per PR_MONITORING.md (§ PR and CI Monitoring for entries with `in_merge_queue: false`, § Merge Queue Monitoring for entries with `in_merge_queue: true`). Use the `agentless` flag (tasks where `agent_id` is null) to determine whether to message a Task Agent or handle directly.
 >
-> 3. **Check PR status.** For each active PR that is **not** in the merge queue (both plan-tracked and independent), run `check-pr-status.sh <pr-url>` (in `skills/orchestrating-agents/scripts/`). Handle exit codes per PR_MONITORING.md § PR and CI Monitoring. Use the `agentless` flag (tasks where `agent_id` is null) to determine whether to message a Task Agent or handle directly.
+> 3. **Check agent liveness.** For each in_progress task that has an `agent_id` set (skip agentless tasks), call `TaskGet <agent_id>`. Handle dead agents per PR_MONITORING.md § Liveness Checks — Dead path. Handle stalled agents (running but no activity for `POLLING_TIMEOUT_MINUTES`) per PR_MONITORING.md § Liveness Checks — Stalled path.
 >
-> 4. **Check merge queue.** For each PR that is in the merge queue (both plan-tracked and independent), run `check-merge-queue.sh <pr-url>` (in `scripts/` under the plugin root). Handle exit codes per PR_MONITORING.md § Merge Queue Monitoring.
+> 3.5. **Check deferred actions.** For each stored deferred action where `current_time >= target_time`: execute the action (`mark-pr-ready.sh` or `add-to-merge-queue.sh`), notify the Task Agent via SendMessage, and remove the deferred action from the list. Call `save-session-state.sh` if any actions were executed.
 >
-> 5. **Check agent liveness.** For each in_progress task that has an `agent_id` set (skip agentless tasks), call `TaskGet <agent_id>`. Handle dead agents per PR_MONITORING.md § Liveness Checks — Dead path. Handle stalled agents (running but no activity for `POLLING_TIMEOUT_MINUTES`) per PR_MONITORING.md § Liveness Checks — Stalled path.
->
-> 5.5. **Check deferred actions.** For each stored deferred action where `current_time >= target_time`: execute the action (`mark-pr-ready.sh` or `add-to-merge-queue.sh`), notify the Task Agent via SendMessage, and remove the deferred action from the list. Call `save-session-state.sh` if any actions were executed.
->
-> 6. **Check independent worktrees.** For each independent worktree with a known PR, run the appropriate check script (`check-pr-status.sh` if not in merge queue, `check-merge-queue.sh` if in merge queue). Handle per PR_MONITORING.md § Independent PR Monitoring or § Independent PR Merge Queue Monitoring.
->
-> 7. **Timeouts.** If any check script emits a `TIMEOUT` line in stdout, escalate to the human with the PR URL and elapsed time.
+> 4. **Timeouts.** If any PR entry's `output` contains a `TIMEOUT` line, escalate to the human with the PR URL and elapsed time.
 >
 > If nothing is reportable (all exit codes are 4 with no timeouts), do nothing.
 

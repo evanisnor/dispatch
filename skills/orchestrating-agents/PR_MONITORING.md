@@ -4,12 +4,14 @@
 
 After a Task Agent opens a PR, the Orchestrating Agent monitors it through to merge. The Orchestrating Agent runs check scripts on a cron-driven schedule (see SKILL.md § Activity Polling):
 
+- `poll-github.sh` — **primary cron entry point.** Orchestrates all three check scripts below into a single call with unified YAML output. The cron prompt pipes PR data to this script and parses the structured result.
+- `check-review-requests.sh` — checks for incoming review requests.
 - `check-pr-status.sh` — checks PR state, review decision, and CI check summaries.
 - `check-merge-queue.sh` — checks merge queue status after the PR is added to the queue.
 
-> **Script locations:** `check-review-requests.sh` and `check-merge-queue.sh` are in `scripts/` (plugin root). `check-pr-status.sh` is in `skills/orchestrating-agents/scripts/`.
+> **Script locations:** `poll-github.sh`, `check-review-requests.sh`, and `check-merge-queue.sh` are in `scripts/` (plugin root). `check-pr-status.sh` is in `skills/orchestrating-agents/scripts/`. The individual scripts remain available for direct use outside the cron cycle (e.g., startup reconciliation, liveness checks).
 
-Both scripts read `POLLING_TIMEOUT_MINUTES` from `config.sh`, persist state between invocations via state files, and emit **state-change events only** — never full API response payloads.
+All check scripts read `POLLING_TIMEOUT_MINUTES` from `config.sh`, persist state between invocations via state files, and emit **state-change events only** — never full API response payloads.
 
 > **Notification formatting:** All human-facing notifications must follow the banner styles defined in [NOTIFICATIONS.md](../NOTIFICATIONS.md).
 

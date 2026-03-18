@@ -5418,7 +5418,7 @@ tasks:
 
   - id: 135
     name: consolidate-github-polling
-    status: in_progress
+    status: done
     depends_on: [134]
     description: >
       Consolidate all GitHub polling into a single entry-point script (scripts/poll-github.sh) that wraps check-review-requests.sh, check-pr-status.sh, and check-merge-queue.sh. Update the SKILL.md cron prompt to call the consolidated script and update PR_MONITORING.md overview.
