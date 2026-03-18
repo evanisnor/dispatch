@@ -650,9 +650,9 @@ The cron prompt must be self-contained — the OA may have been idle and needs f
 >
 > 1. **Read plan.** Discover `TASKS_PATH` via `discover-tasks-path.sh` (or use cached value). Extract all tasks with `status: in_progress` using `yq e "($TASKS_PATH[] | select(.status == \"in_progress\"))" <plan-file>`. Collect each task's `id`, `pr_url`, `agent_id`, `branch`, `worktree`, and whether it is in the merge queue.
 >
-> 2. **Poll GitHub.** Build YAML listing all PRs to check (plan-tracked and independent) with each PR's `number`, `url`, and `in_merge_queue` flag. Pipe to `poll-github.sh` (in `scripts/` under the plugin root). Parse the structured YAML output:
+> 2. **Poll GitHub.** Run `poll-github.sh` (in `scripts/` under the plugin root) with no arguments. Parse the structured YAML output:
 >    - Under `review_requests.events`: handle all `NEW_REVIEW_REQUEST` and `REVIEW_REMOVED` lines per CODE_REVIEW.md. If the pending reviews list changed, call `save-session-state.sh`.
->    - Under `prs[]`: for each entry, handle `exit_code` per PR_MONITORING.md (§ PR and CI Monitoring for entries with `in_merge_queue: false`, § Merge Queue Monitoring for entries with `in_merge_queue: true`). Use the `agentless` flag (tasks where `agent_id` is null) to determine whether to message a Task Agent or handle directly.
+>    - Under `prs[]`: match each entry's `number` or `url` against plan tasks (by `pr_url`) and the independent PR list. For matched plan tasks, handle `exit_code` per PR_MONITORING.md (§ PR and CI Monitoring for `in_merge_queue: false`, § Merge Queue Monitoring for `in_merge_queue: true`). Use the `agentless` flag (tasks where `agent_id` is null) to determine whether to message a Task Agent or handle directly. For PRs not matched to any plan task or independent worktree, treat as newly-discovered independent PRs and add to the independent PR list.
 >
 > 3. **Check agent liveness.** For each in_progress task that has an `agent_id` set (skip agentless tasks), call `TaskGet <agent_id>`. Handle dead agents per PR_MONITORING.md § Liveness Checks — Dead path. Handle stalled agents (running but no activity for `POLLING_TIMEOUT_MINUTES`) per PR_MONITORING.md § Liveness Checks — Stalled path.
 >

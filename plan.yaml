@@ -5422,3 +5422,10 @@ tasks:
     depends_on: [134]
     description: >
       Consolidate all GitHub polling into a single entry-point script (scripts/poll-github.sh) that wraps check-review-requests.sh, check-pr-status.sh, and check-merge-queue.sh. Update the SKILL.md cron prompt to call the consolidated script and update PR_MONITORING.md overview.
+
+  - id: 136
+    name: self-discovering-poll-github
+    status: done
+    depends_on: [135]
+    description: >
+      Make poll-github.sh self-discover authored PRs via gh pr list --author @me instead of receiving PR list on stdin. Determine in_merge_queue from state file existence. Add url to output. Update SKILL.md cron prompt and PR_MONITORING.md overview.

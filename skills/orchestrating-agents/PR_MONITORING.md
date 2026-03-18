@@ -4,7 +4,7 @@
 
 After a Task Agent opens a PR, the Orchestrating Agent monitors it through to merge. The Orchestrating Agent runs check scripts on a cron-driven schedule (see SKILL.md § Activity Polling):
 
-- `poll-github.sh` — **primary cron entry point.** Orchestrates all three check scripts below into a single call with unified YAML output. The cron prompt pipes PR data to this script and parses the structured result.
+- `poll-github.sh` — **primary cron entry point.** Self-discovers all open PRs authored by the current user via `gh pr list --author @me`, then orchestrates all three check scripts below into a single call with unified YAML output. No arguments or stdin required.
 - `check-review-requests.sh` — checks for incoming review requests.
 - `check-pr-status.sh` — checks PR state, review decision, and CI check summaries.
 - `check-merge-queue.sh` — checks merge queue status after the PR is added to the queue.
