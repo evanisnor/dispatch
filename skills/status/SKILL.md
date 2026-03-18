@@ -3,7 +3,7 @@ name: status
 description: "Display a status table of all active worktrees, their agent state, current activity, and PR state. Invoke with /status."
 ---
 
-Render the status display immediately using the rules below. Do not read any external files. Do not summarise in prose instead of or in addition to cards. Never use bulleted lists, numbered lists, or any non-card format — every piece of status data must appear inside a card.
+Render the status display immediately using the rules below. Do not summarise in prose instead of or in addition to cards. Never use bulleted lists, numbered lists, or any non-card format — every piece of status data must appear inside a card.
 
 ## Worktree Cards
 
@@ -95,6 +95,24 @@ Render below the Queued section (or below the Worktree Cards if Queued is omitte
 ```
 
 **Independent worktrees:** Worktrees from `git worktree list` that are not referenced by any plan task (excluding the main worktree) appear as Worktree Cards with no Task row, no Agent label (just `**Activity:** independent`), and PR discovered via `gh pr list --head <branch>`. See STATUS.md § Independent Worktree Cards for full row definitions.
+
+## Data Extraction
+
+When plan data is not already in memory, extract task summaries from the plan YAML file.
+
+**Discover the tasks path** using `discover-tasks-path.sh`:
+
+```bash
+TASKS_PATH=$(bash "$DISPATCH_PLUGIN_DIR/scripts/discover-tasks-path.sh" "$PLAN_FILE")
+```
+
+**Extract task data** as YAML objects — never use `@csv` (it fails on nested fields like `depends_on`):
+
+```bash
+yq e '<TASKS_PATH>[] | {"id": .id, "title": .title, "status": .status, "depends_on": (.depends_on // [] | join(",")), "branch": .branch, "pr_url": .pr_url, "worktree": .worktree, "agent_id": .agent_id}' "$PLAN_FILE"
+```
+
+Replace `<TASKS_PATH>` with the literal value from `discover-tasks-path.sh` (e.g. `.epic.tasks`).
 
 ## Rendering Rules
 

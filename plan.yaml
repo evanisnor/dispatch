@@ -5392,3 +5392,9 @@ tasks:
     status: done
     depends_on: []
     description: Eliminate the Polling Agent entirely and have the OA run check scripts itself on a cron schedule. Delete polling-agent SKILL.md, rewrite Section 7 of orchestrating-agents SKILL.md to use CronCreate with a self-contained polling cycle prompt, update all Polling Agent references across PR_MONITORING.md, REVIEW.md, config SKILL.md, and CLAUDE.md.
+
+  - id: 131
+    name: add-yq-guidance-to-status-skill
+    status: done
+    depends_on: []
+    description: Add a Data Extraction section to skills/status/SKILL.md with safe yq patterns for reading plan YAML. The agent was improvising yq commands with @csv encoding, which fails on nested fields like depends_on. Provide the correct yq object-output command and remove the incorrect "Do not read any external files" instruction.
