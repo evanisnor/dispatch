@@ -70,6 +70,15 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
         ```
       - If `ISSUE_TRACKING_PROMPT` is empty: mark the issue in progress using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
 
+**1.75. Review predecessor implementations.**
+If your spawn input includes a "Completed Task Context" section with direct predecessors:
+
+   a. Read each predecessor's summary to understand what was implemented — key files, APIs, interfaces, and patterns.
+   b. For direct predecessors that introduced interfaces, data structures, or patterns your task consumes: run `gh pr diff <pr-url>` to inspect the actual implementation. Focus on public API surfaces, file structure, and naming conventions.
+   c. Note any patterns or conventions established by predecessors that your implementation should follow.
+
+Keep inspection focused — only deep-dive predecessors whose work directly affects your task. Do not spend time on unrelated completed tasks. If a predecessor has no summary and no PR URL, proceed based on your own codebase inspection.
+
 2. **Implement** the task in your assigned worktree.
 3. **Complete pre-PR checklist** (see below).
 4. **Request diff approval** from the Primary Agent.
@@ -164,6 +173,27 @@ Run `load-knowledge.sh --category ci --category conflict --category pr-review --
          The sub-agent closes and links the issue in the tracker and returns a confirmation string.
        - If `ISSUE_TRACKING_PROMPT` is empty: close the issue and link the merged PR URL using your available tracker integration tools directly, per [ISSUE_TRACKING.md](../planning-tasks/ISSUE_TRACKING.md).
        - Report the outcome to the Primary Agent.
+
+**11.25. Record implementation summary.**
+Before recording knowledge entries, write a concise summary of what was implemented to the plan. This summary is consumed by future Task Agents to understand what predecessor tasks built.
+
+   a. Compose a `result.summary` string containing 3–5 bullet points (under 150 words total) covering:
+      - What was implemented (key behavior and functionality)
+      - Key files created or significantly modified
+      - Public APIs, interfaces, or patterns introduced that downstream tasks should use
+
+   b. Write the summary to the plan YAML via `strenv()` (handles multi-line safely):
+      ```bash
+      TASKS_PATH=$(<plugin-root>/scripts/discover-tasks-path.sh <plan-path>)
+      export SUMMARY="<your summary>"
+      yq e -i "($TASKS_PATH[] | select(.id == \"<task-id>\")).result.summary = strenv(SUMMARY)" <plan-path>
+      # MANDATORY: read back and verify
+      ACTUAL=$(yq e "($TASKS_PATH[] | select(.id == \"<task-id>\")).result.summary" <plan-path>)
+      # If ACTUAL does not match, the update silently failed — investigate
+      # Commit per PLAN_STORAGE.md write-with-lock pattern
+      ```
+
+   Recording a summary is **not optional** — same enforcement as knowledge recording in step 11.5.
 
 **11.5. Record task lessons.**
 Knowledge recording is **not optional** — always record at least one entry, at most three. Each entry must include `context` (brief situation description) and `lesson` (actionable principle for future agents), plus `plan_id` and `task_id` in `source`.

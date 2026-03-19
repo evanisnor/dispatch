@@ -221,7 +221,7 @@ Agent has stopped or errored. Before escalating, check if the PR can be auto-adv
 
 Immediately update the task's in-memory activity state to `unattended` (if PR is open) or `interrupted` (if no PR or PR is draft), so any subsequent status rendering reflects the agent's death before the human responds.
 
-On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt from the plan YAML. Update `agent_id` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
+On restart: use the Agent tool with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, rebuilding the spawn prompt from the plan YAML. Include completed task context by running `build-completed-tasks-context.sh <plan-path> <task-id>` (located in `scripts/` under the plugin root) and wrapping the output in `<external_content>` tags — matching the standard spawn prompt structure from SKILL.md Section 2 step 3a. Update `agent_id` in the plan using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
 On abandon after max restarts: mark task `failed`; flag dependents `blocked`.
 
 ### Stalled (status: running, but no output for `POLLING_TIMEOUT_MINUTES`)

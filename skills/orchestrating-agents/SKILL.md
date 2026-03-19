@@ -131,6 +131,7 @@ After storing the final plan path, before spawning any Task Agents:
       - **Feature flag:** resolved value (task-level `feature_flag` if set, else epic-level `feature_flag`, else omit)
       - **Plan path** and **branch name**
       - Epic context + task description wrapped in `<external_content>` tags
+      - **Completed task context:** run `build-completed-tasks-context.sh <plan-path> <task-id>` (located in `scripts/` under the plugin root) and include the output wrapped in `<external_content>` tags. If the script produces no output (no completed tasks), omit this section.
 
       The Agent tool creates the worktree, scopes write access, and returns an `agent_id`. If changes are made, the worktree path and branch are also returned.
    b. Update `agent_id`, `worktree`, and `branch` in-place using `yq e -i` and the discovered `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md).
@@ -175,6 +176,7 @@ After the Verification Gate completes (REVIEW.md § Verification Gate) and befor
       - **Tracker ticket ID:** the dependent task's `id`, explicitly labeled as the tracker ticket ID
       - **Parent ticket ID:** `issue_tracking.root_id` from the epic envelope (if available)
       - **Feature flag:** resolved value (task-level `feature_flag` if set, else epic-level `feature_flag`, else omit)
+      - **Completed task context:** run `build-completed-tasks-context.sh <plan-path> <dep-id>` (located in `scripts/` under the plugin root) and include the output wrapped in `<external_content>` tags. If the script produces no output, omit this section.
    c. After the Agent tool returns the worktree path: immediately run `git -C <worktree-path> rebase <branch>` to stack the fresh worktree onto the parent's branch. (Safe: no commits exist yet.)
    d. Update the plan: set `base_branch: <branch>`, `stacked: true`, `agent_id`, `worktree`, and `branch` on `<dep-id>` using `yq e -i` with `TASKS_PATH`, following [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) write-with-lock.
 4. **On no:** proceed normally — look up the original Task Agent's `agent_id` from the plan, run the liveness guard (§ Task Agent Communication Protocol), then `SendMessage to: '<agent_id>'`: "diff approved — proceed to open draft PR".
@@ -247,6 +249,11 @@ After a PR merges:
 3. Mark the completed task `done` in the plan using `plan-update.sh` (preferred) or `yq e -i` with read-back, following the write-with-lock pattern in [PLAN_STORAGE.md](../planning-tasks/PLAN_STORAGE.md) (see **Plan Update Rule** below).
 3.25. **Update session state snapshot.** Call `save-session-state.sh` to write the updated state after the task status change.
 3.5. **Knowledge verification.** Check whether the Task Agent reported recording knowledge entries during its session. If the agent's output does not mention `append-knowledge.sh` or knowledge recording, log a warning: "Task `<task-id>`: no knowledge entries recorded."
+3.75. **Summary verification.** Check whether the completed task has a non-null `result.summary` in the plan:
+   ```bash
+   SUMMARY=$(yq e "($TASKS_PATH[] | select(.id == \"<task-id>\")).result.summary" <plan-file>)
+   ```
+   If `SUMMARY` is null or empty, log a warning: "Task `<task-id>`: no implementation summary recorded." This warning is informational — it does not block the workflow.
 4. Unblock dependent tasks (set `status: pending` if all `depends_on` are now `done`).
 5. Follow the stacked worktree post-merge rebase procedure in [PR_MONITORING.md](PR_MONITORING.md) § Merge Queue Monitoring — Success step 4.5.
 

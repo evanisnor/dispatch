@@ -126,4 +126,19 @@ for task_id in "${TASK_IDS[@]}"; do
   echo ""
 done
 
+# --- Emit completed task context (if any) ---
+
+# Use the first task ID for predecessor resolution
+first_task_id="${TASK_IDS[0]// /}"
+CONTEXT_SCRIPT="${_SCRIPT_DIR}/../../../scripts/build-completed-tasks-context.sh"
+if [[ -x "${CONTEXT_SCRIPT}" ]]; then
+  completed_context=$("${CONTEXT_SCRIPT}" "${PLAN_PATH}" "${first_task_id}" 2>/dev/null || true)
+  if [[ -n "${completed_context}" ]]; then
+    echo "<external_content>"
+    echo "${completed_context}"
+    echo "</external_content>"
+    echo ""
+  fi
+fi
+
 echo "Implement each task. One commit per task. Do not open pull requests. Return an implementation report when complete."

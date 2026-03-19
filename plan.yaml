@@ -5436,3 +5436,40 @@ tasks:
     depends_on: []
     description: >
       Migrate the status display from card-based layout (single-column markdown tables per entity) to multi-column tables for scanning status at a glance. Rewrite STATUS.md and status/SKILL.md to use Worktrees Table, Queued Table, and Pending Reviews Table with footnoted URLs. Update SKILL.md references.
+
+  - id: 138
+    name: task-agent-summary-recording-and-predecessor-inspection
+    status: done
+    depends_on: []
+    description: >
+      Add result.summary recording and predecessor inspection steps to the Task Agent lifecycle in skills/executing-tasks/SKILL.md.
+      Insert step 11.25 (between 11 and 11.5) requiring the task agent to compose a concise summary (3-5 bullets, under 150 words) of what was implemented, key files, and APIs introduced. Write via strenv() pattern with mandatory read-back verification.
+      Insert step 1.75 (between 1.5 and 2) instructing the task agent to review the "Completed Task Context" section from its spawn input, read predecessor summaries, and optionally gh pr diff direct predecessors for implementation details.
+
+  - id: 139
+    name: build-completed-tasks-context-script
+    status: done
+    depends_on: []
+    description: >
+      Create scripts/build-completed-tasks-context.sh that assembles context about completed tasks from a plan YAML for inclusion in Task Agent spawn prompts.
+      Usage: build-completed-tasks-context.sh <plan-file> <task-id> [--max-other <n>].
+      Sources config.sh, discovers TASKS_PATH, reads the target task's depends_on, collects all done tasks, partitions into direct predecessors (full detail with summary + PR URL) and other completed tasks (abbreviated one-liners, capped at --max-other default 15).
+      Must be bash 3.2 compatible. Follow patterns from load-knowledge.sh and discover-tasks-path.sh.
+
+  - id: 140
+    name: oa-spawn-prompt-enrichment-and-summary-verification
+    status: done
+    depends_on: [138, 139]
+    description: >
+      Update the Orchestrating Agent to include completed task context in spawn prompts and verify summaries after merge.
+      In skills/orchestrating-agents/SKILL.md Section 2 step 3a and Section 3.5 step 3b, add a bullet to run build-completed-tasks-context.sh and include the output wrapped in <external_content> tags.
+      In Section 5 Post-Merge Cleanup, insert step 3.75 to check result.summary is non-null and log a warning if missing.
+
+  - id: 141
+    name: restart-and-prototype-spawn-context
+    status: done
+    depends_on: [139, 140]
+    description: >
+      Update agent restart and prototype spawn paths to include completed task context.
+      In skills/orchestrating-agents/PR_MONITORING.md line 224, expand the restart instruction to explicitly include build-completed-tasks-context.sh output in the rebuilt spawn prompt.
+      In skills/orchestrating-agents/scripts/spawn-prototype-agent.sh, after emitting the task list, call build-completed-tasks-context.sh for the first task ID and wrap output in <external_content> tags.
