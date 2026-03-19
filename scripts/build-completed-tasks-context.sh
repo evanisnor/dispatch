@@ -107,10 +107,12 @@ while IFS= read -r task_id; do
 
   task_title=$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).title // ($TASKS_PATH[] | select(.id == \"${task_id}\")).name // \"\"" "${PLAN_FILE}" 2>/dev/null || true)
   task_summary=$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).result.summary // \"\"" "${PLAN_FILE}" 2>/dev/null || true)
+  task_commit_sha=$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).result.commit_sha // \"\"" "${PLAN_FILE}" 2>/dev/null || true)
   task_pr_url=$(yq e "($TASKS_PATH[] | select(.id == \"${task_id}\")).pr_url // ($TASKS_PATH[] | select(.id == \"${task_id}\")).result.pr_url // \"\"" "${PLAN_FILE}" 2>/dev/null || true)
 
   # Normalize nulls
   if [[ "${task_summary}" == "null" ]]; then task_summary=""; fi
+  if [[ "${task_commit_sha}" == "null" ]]; then task_commit_sha=""; fi
   if [[ "${task_pr_url}" == "null" ]]; then task_pr_url=""; fi
   if [[ "${task_title}" == "null" ]]; then task_title=""; fi
 
@@ -118,13 +120,14 @@ while IFS= read -r task_id; do
     predecessor_output="${predecessor_output}
 - **${task_id}: ${task_title}**
   Summary: ${task_summary:-no summary recorded}
+  Commit: ${task_commit_sha:-none}
   PR: ${task_pr_url:-none}
 "
   else
     if [[ ${other_count} -lt ${MAX_OTHER} ]]; then
       first_line=$(_first_line "${task_summary}" "no summary recorded")
       other_output="${other_output}
-- **${task_id}: ${task_title}** — ${first_line} (PR: ${task_pr_url:-none})"
+- **${task_id}: ${task_title}** — ${first_line} (Commit: ${task_commit_sha:-none}, PR: ${task_pr_url:-none})"
       other_count=$((other_count + 1))
     fi
   fi
@@ -143,7 +146,7 @@ echo ""
 if [[ -n "${predecessor_output}" ]]; then
   echo "### Direct Predecessors"
   echo ""
-  echo "These tasks are direct dependencies. Their code is merged to the base branch. Inspect their PRs for implementation details."
+  echo "These tasks are direct dependencies. Their code is on the base branch. Inspect their commits for implementation details."
   echo "${predecessor_output}"
 fi
 
@@ -155,5 +158,5 @@ if [[ -n "${other_output}" ]]; then
   echo ""
 fi
 
-echo "To inspect any task's changes: \`gh pr diff <pr-url>\`"
-echo "To see files changed: \`gh pr diff <pr-url> --name-only\`"
+echo "To inspect any task's changes: \`git show <commit-sha>\`"
+echo "To see files changed: \`git show --name-only <commit-sha>\`"

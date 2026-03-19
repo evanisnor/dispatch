@@ -40,6 +40,5 @@ Once the Orchestrating Agent is active, interact in plain language:
 > "Split task T-3 into two smaller tasks."
 
 **Respond to escalations**
-> The Orchestrating Agent will ask for your input when CI fails beyond the retry
-> limit, a reviewer requests changes, a merge conflict needs resolution, or an
-> agent appears to have stalled.
+> The Orchestrating Agent will ask for your input when reviewing diffs, approving
+> plans, or when an agent encounters an issue.

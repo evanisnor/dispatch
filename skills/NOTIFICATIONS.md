@@ -6,7 +6,7 @@ All human-facing notifications must use one of the four banner styles below. The
 
 ### ACTION REQUIRED — human must respond
 
-Use for: diff review requests, plan review requests, approval gates, scheduling prompts, stacking prompts, verification gates, batch spawn approval, orphaned worktree decisions.
+Use for: diff review requests, plan review requests, approval gates, verification gates, batch spawn approval, task spawn approval.
 
 ```
 ---
@@ -26,7 +26,7 @@ Rendering rules:
 
 ### INFORMATIONAL — notice-worthy, no response needed
 
-Use for: draft PR opened, review requested (incoming), preliminary review ready, review removed, startup greetings, stacking explanation, stalled reviewer comment.
+Use for: review requested (incoming), preliminary review ready, review removed, startup greetings, task committed.
 
 ```
 **-- <Topic>:** <message>
@@ -35,11 +35,11 @@ Use for: draft PR opened, review requested (incoming), preliminary review ready,
 Rendering rules:
 - Single line. Bold leader `**-- <Topic>:**` followed by message text.
 - No horizontal rules, no block structure.
-- Topic is a short label describing the event (e.g., `Draft PR opened`, `Review requested`, `Preliminary review ready`).
+- Topic is a short label describing the event (e.g., `Task committed`, `Review requested`, `Preliminary review ready`).
 
 ### WARNING — something went wrong, usually needs a decision
 
-Use for: CI fix exhausted, merge queue ejection, agent death, agent stall, timeout escalation, plan corruption, failed tasks warning.
+Use for: timeout escalation, plan corruption, failed tasks warning.
 
 ```
 ---
@@ -76,62 +76,44 @@ Rendering rules:
 |---|---|---|
 | Prototype mode selection | ACTION REQUIRED | SKILL.md |
 | Prototype complete | ACTION REQUIRED | SKILL.md |
-| Batch spawn approval | ACTION REQUIRED | SKILL.md |
-| Stacking prompt | ACTION REQUIRED | SKILL.md |
-| Orphaned worktree decision | ACTION REQUIRED | SKILL.md |
+| Task spawn approval | ACTION REQUIRED | SKILL.md |
 | Plan review ready | ACTION REQUIRED | REVIEW.md |
 | Amendment review ready | ACTION REQUIRED | REVIEW.md |
 | Diff review (approve/reject) | ACTION REQUIRED | REVIEW.md |
 | Verification gate | ACTION REQUIRED | REVIEW.md |
-| Reviewer-requested change | ACTION REQUIRED | REVIEW.md |
-| Reviewer commented (plan-tracked) | ACTION REQUIRED | REVIEW.md |
-| Conflict resolution review | ACTION REQUIRED | REVIEW.md |
+| Task committed — diff review | ACTION REQUIRED | REVIEW.md |
 | Diff open for incoming review | ACTION REQUIRED | CODE_REVIEW.md |
-| CI passing — schedule readiness | ACTION REQUIRED | executing-tasks/SKILL.md |
-| Approved — schedule merge | ACTION REQUIRED | executing-tasks/SKILL.md |
-| Draft PR opened | INFORMATIONAL | PR_MONITORING.md |
-| Draft PR opened (Task Agent) | INFORMATIONAL | executing-tasks/SKILL.md |
 | Review requested (incoming) | INFORMATIONAL | CODE_REVIEW.md |
 | Review request removed | INFORMATIONAL | CODE_REVIEW.md |
 | Preliminary review ready | INFORMATIONAL | CODE_REVIEW.md |
-| Startup greetings (Scenarios A–D) | INFORMATIONAL | SKILL.md |
-| Stacking explanation | INFORMATIONAL | SKILL.md |
-| Stalled reviewer comment | INFORMATIONAL | PR_MONITORING.md |
-| Re-review requested (CI passing) | INFORMATIONAL | PR_MONITORING.md |
-| PR auto-advanced (orphaned agent) | INFORMATIONAL | PR_MONITORING.md |
-| CI fix exhausted | WARNING | PR_MONITORING.md |
-| Merge queue ejection | WARNING | PR_MONITORING.md |
+| Startup greetings (Scenarios A-D) | INFORMATIONAL | SKILL.md |
+| Task completed | SUCCESS | SKILL.md |
 | Timeout escalation | WARNING | PR_MONITORING.md |
-| Agent dead | WARNING | PR_MONITORING.md |
-| Agent stalled | WARNING | PR_MONITORING.md |
 | Plan corruption | WARNING | SKILL.md |
 | Failed tasks warning | WARNING | SKILL.md |
 | Startup Scenario C with failures | WARNING | SKILL.md |
 | PR approved | SUCCESS | CODE_REVIEW.md |
 | All tasks complete | SUCCESS | SKILL.md |
 | Ready for new assignment | SUCCESS | SKILL.md |
-| Independent PR approved + CI passing | ACTION REQUIRED | PR_MONITORING.md |
+| Independent PR approved + CI passing | INFORMATIONAL | PR_MONITORING.md |
 | Independent PR changes requested | INFORMATIONAL | PR_MONITORING.md |
 | Independent PR reviewer commented | INFORMATIONAL | PR_MONITORING.md |
 | Independent PR CI failed | INFORMATIONAL | PR_MONITORING.md |
 | Independent PR merged | SUCCESS | PR_MONITORING.md |
 | Independent PR closed | INFORMATIONAL | PR_MONITORING.md |
-| Independent PR added to merge queue | INFORMATIONAL | PR_MONITORING.md |
 | Independent PR merge queue conflict | WARNING | PR_MONITORING.md |
 | Independent PR merge queue CI failure | WARNING | PR_MONITORING.md |
 | Independent PR merge queue ejection | WARNING | PR_MONITORING.md |
-| PR adopted into monitoring (dead agent, non-draft) | INFORMATIONAL | SKILL.md, PR_MONITORING.md |
 
 ## Card Embedding
 
-Every notification that references a PR, task, worktree, or plan must embed a **card** (single-column markdown table) providing entity details. The banner text gives event context; the card gives entity details.
+Every notification that references a PR, task, or plan must embed a **card** (single-column markdown table) providing entity details. The banner text gives event context; the card gives entity details.
 
 ### When to Embed
 
 Embed a card whenever the notification references:
 - A PR (use PR Card)
 - A task (use Task Card)
-- A worktree (use Worktree Card — see STATUS.md)
 - A plan (use Plan Card — see STATUS.md)
 - An issue tracker issue (use Issue Card)
 
@@ -154,12 +136,10 @@ Embed a card whenever the notification references:
 | T-{id}: {title} |
 |---|
 | **Status:** {old} → {new} |
-| **Branch:** `{branch}` |
-| **PR:** #{number} |
-| {pr_url} |
+| **Commit:** {sha} |
 ```
 
-- Omit Branch/PR/URL rows when not yet assigned.
+- Omit Commit row when not yet committed.
 
 ### Issue Card
 
@@ -179,14 +159,13 @@ Embed a card whenever the notification references:
 ### Example
 
 ```
-**-- Draft PR opened:**
+**-- Task committed:**
 
-| #42 — Add auth login flow |
+| T-1: Implement login flow |
 |---|
-| **Task:** T-1: Implement login flow |
-| https://github.com/org/repo/pull/42 |
+| **Commit:** a1b2c3d |
 ```
 
 ## Agent-to-Agent Messages
 
-Messages between agents (e.g., "diff approved — proceed to open draft PR") are **not** human-facing notifications. They do not use banner styles.
+Messages between agents (e.g., "approved") are **not** human-facing notifications. They do not use banner styles.

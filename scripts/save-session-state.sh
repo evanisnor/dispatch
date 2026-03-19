@@ -15,7 +15,7 @@ _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- Parse arguments ---
 if [[ $# -lt 2 ]]; then
-  echo "Usage: save-session-state.sh <memory-dir> <plan-file> [--independent-prs <yaml>] [--pending-reviews <yaml>]" >&2
+  echo "Usage: save-session-state.sh <memory-dir> <plan-file> [--independent-prs <yaml>] [--pending-reviews <yaml>] [--deferred-actions <yaml>]" >&2
   exit 1
 fi
 
@@ -106,7 +106,7 @@ if [[ -z "$IT_ROOT_ID" ]]; then
 fi
 
 # --- Extract task list ---
-TASKS_YAML=$(yq e "$TASKS_PATH[] | {\"id\": .id, \"status\": .status, \"pr_url\": (.pr_url // \"null\"), \"agent_id\": (.agent_id // \"null\")}" "$PLAN_FILE" 2>/dev/null || true)
+TASKS_YAML=$(yq e "$TASKS_PATH[] | {\"id\": .id, \"status\": .status}" "$PLAN_FILE" 2>/dev/null || true)
 
 # --- Build output ---
 OUTPUT_FILE="${MEMORY_DIR}/dispatch-session-state.yaml"
